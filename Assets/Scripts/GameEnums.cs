@@ -12,3 +12,11 @@ public enum HitType
     Pierce,
     Blunt
 }
+
+public enum ElementType
+{
+    Fire,
+    Water,
+    Ice,
+    Electric
+}

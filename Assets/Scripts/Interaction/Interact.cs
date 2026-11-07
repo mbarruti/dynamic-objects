@@ -5,6 +5,7 @@ public class Interact : MonoBehaviour
 {
     [SerializeField] private Camera mainCamera;
     [SerializeField] private float maxDistance;
+    [SerializeField] private Attack attack;
 
     private void Update()
     {
@@ -46,7 +47,6 @@ public class Interact : MonoBehaviour
 
             if (interactable is DynamicObjectBehaviour dynamicObject)
             {
-                Attack attack = new();
                 attack.ApplyHit(dynamicObject);
             }
         }

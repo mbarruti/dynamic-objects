@@ -10,25 +10,25 @@ public static class DynamicEvaluator
                 if (data.Material == ObjectMaterial.Default)
                     finalDamage = hit.Damage;
                 else if (data.Material == ObjectMaterial.Wood)
-                    finalDamage = hit.Damage * 0.3f;
+                    finalDamage = 0f;
                 break;
 
             case HitType.Pierce:
                 if (data.Material == ObjectMaterial.Default)
                     finalDamage = hit.Damage;
                 else if (data.Material == ObjectMaterial.Wood)
-                    finalDamage = hit.Damage * 0.5f;
+                    finalDamage = 1f;
                 break;
 
             case HitType.Blunt:
                 if (data.Material == ObjectMaterial.Default)
                     finalDamage = hit.Damage;
                 else if (data.Material == ObjectMaterial.Wood)
-                    finalDamage = hit.Damage * 0.5f;
+                    finalDamage = 10f;
                 else if (data.Material == ObjectMaterial.Stone)
-                    finalDamage = hit.Damage * 3;
+                    finalDamage = 10f;
                 else if (data.Material == ObjectMaterial.Metal)
-                    finalDamage = hit.Damage * 0.3f;
+                    finalDamage = 5f;
                 break;
         }
 
