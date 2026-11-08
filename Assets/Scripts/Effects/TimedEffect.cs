@@ -51,7 +51,7 @@ public abstract class TimedEffect : IEffect
         OnRemove(target);
     }
 
-    // --- Hooks for subclasses ---
+    // --- Hooks ---
 
     protected virtual void OnApply(DynamicObjectBehaviour target) { }
 
