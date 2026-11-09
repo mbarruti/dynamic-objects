@@ -53,7 +53,7 @@ public class Interact : MonoBehaviour
             {
                 ElementSurface surface = hit.collider.GetComponentInParent<ElementSurface>();
                 if (surface != null)
-                    surface.DebugBuildArea(hit.point, 1f);
+                    surface.DebugDamage(hit.point, 4f);
             }
         }
     }

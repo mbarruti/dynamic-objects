@@ -8,10 +8,10 @@ public class ElementGrid
     private readonly Dictionary<Vector2Int, ElementCell> cells = new();
     private readonly RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] overlapHits = new Collider[16];
-    private readonly List<ElementCell> burning = new();
+    private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> scratch = new();
 
-    public IReadOnlyList<ElementCell> Burning => burning;
+    public IReadOnlyList<ElementCell> BurningCells => burningCells;
 
     public Dictionary<Vector2Int, ElementCell>.ValueCollection Cells => cells.Values;
 
@@ -106,10 +106,48 @@ public class ElementGrid
         return false;
     }
 
-    // public bool TryIgnite(ElementCell cell)
-    // {
+    // State changes
+
+    public bool TryIgnite(ElementCell cell)
+    {
+        if (cell.State != CellState.Normal || cell.HitPoints > 0f)
+            return false;
         
-    // }
+        cell.State = CellState.Burning;
+        burningCells.Add(cell);
+        return true;
+    }
+
+    private void BurnOut(ElementCell cell)
+    {
+        cell.State = CellState.Burnt;
+        burningCells.Remove(cell);
+    }
+
+    // Simulation
+
+    public void Tick(float dt)
+    {
+        UpdateBurning(dt);
+    }
+
+    private void UpdateBurning(float dt)
+    {
+        int count = burningCells.Count;
+
+        for (int i = 0; i < count; i++)
+        {
+            ElementCell cell = burningCells[i];
+            cell.Lifetime -= dt;
+            if (cell.Lifetime <= 0f)
+                scratch.Add(cell);
+        }
+
+        foreach (ElementCell cell in scratch)
+            BurnOut(cell);
+        
+        scratch.Clear();
+    }
 
     private static float FlatDistance(Vector3 a, Vector3 b) =>
         Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));

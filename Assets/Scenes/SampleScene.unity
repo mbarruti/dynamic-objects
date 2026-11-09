@@ -601,6 +601,9 @@ MonoBehaviour:
   settings:
     cellSize: 1
     maxCells: 4096
+    tickInterval: 0.1
+    cellHitPoints: 10
+    burnLifetime: 5
     probeUp: 2
     probeDown: 4
     blockerMask:
