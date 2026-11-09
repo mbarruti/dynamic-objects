@@ -4,11 +4,14 @@ using UnityEngine;
 
 public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable
 {
-    public DynamicObject Data { get; protected set; }
+    public DynamicObject Data { get; private set; }
 
-    protected abstract bool IsDamageable { get; }
-    protected abstract float HitPoints { get; }
-    protected abstract ObjectMaterial Material { get; }
+    protected virtual bool IsDamageable { get; } = false;
+    protected virtual float HitPoints { get; } = 10f;
+    protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
+    protected virtual bool Flammable { get; } = false;
+    protected virtual bool Conductor { get; } = false;
+
     public float CurrentHP { get; protected set; }
 
     private List<IEffect> currentEffects = new();
@@ -24,7 +27,9 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable
             gameObject.name,
             IsDamageable,
             HitPoints,
-            Material
+            Material,
+            Flammable,
+            Conductor
         );
 
         CurrentHP = HitPoints;
@@ -59,7 +64,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable
     public virtual void TakeDamage(float damage)
     {
         // Already dead (Destroy is deferred to end of frame).
-        if (!IsDamageable || CurrentHP <= 0)
+        if (!IsDamageable || damage == 0 || CurrentHP <= 0)
             return;
 
         CurrentHP = Mathf.Max(0, CurrentHP - damage);

@@ -1,11 +1,13 @@
+using System.Collections.Generic;
+
 public class HitEvaluation
 {
     public float FinalDamage { get; }
-    public bool EffectResistance { get; }
+    public List<IEffect> Effects { get; }
 
-    public HitEvaluation(float finalDamage, bool effectResistance)
+    public HitEvaluation(float finalDamage, List<IEffect> effects)
     {
         FinalDamage = finalDamage;
-        EffectResistance = effectResistance;
+        Effects = effects;
     }
 }

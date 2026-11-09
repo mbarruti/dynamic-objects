@@ -1,6 +1,7 @@
 // Runtime instance of an effect on one target. Created by an EffectDefinition.
 public interface IEffect
 {
+    DynamicObjectBehaviour Target { get; }
     bool IsFinished { get; }
 
     // Called once when the effect is added to a target.
@@ -8,6 +9,8 @@ public interface IEffect
 
     // Called once when the effect is removed from a target.
     void Remove(DynamicObjectBehaviour target);
+
+    bool CanAffect(DynamicObject target);
 
     EffectDefinition GetDefinition();
 }

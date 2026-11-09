@@ -17,15 +17,21 @@ public abstract class TimedEffect : IEffect
 
     public virtual bool CanStack => false;
 
+    public DynamicObjectBehaviour Target { get; private set; }
+
+
     protected TimedEffect(TimedEffectDefinition definition)
     {
         Definition = definition;
     }
 
+    public virtual bool CanAffect(DynamicObject target) => true;
+
     public EffectDefinition GetDefinition() => Definition;
 
     public void Apply(DynamicObjectBehaviour target)
     {
+        Target = target;
         OnApply(target);
         StartTimer(target);
     }
@@ -98,7 +104,7 @@ public abstract class TimedEffect : IEffect
     }
 }
 
-// Typed layer so subclasses get their own definition without casting.
+// Helper. Typed layer so subclasses get their own definition without casting.
 public abstract class TimedEffect<TDef> : TimedEffect where TDef : TimedEffectDefinition
 {
     protected TDef Def => (TDef)Definition;

@@ -2,10 +2,9 @@ using UnityEngine;
 
 public class BurnEffect : TimedEffect<BurnEffectDefinition>
 {
-    // Shared data
-    // private readonly BurnEffectDefinition def;
-
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
+
+    public override bool CanAffect(DynamicObject target) => target.Flammable;
 
     protected override void OnApply(DynamicObjectBehaviour target)
     {

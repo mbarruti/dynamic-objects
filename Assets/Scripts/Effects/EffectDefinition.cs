@@ -1,5 +1,5 @@
 // Shared, read-only data for an effect (configured on an Attack).
-// Never holds per-target state: that lives in the IEffect instances it creates.
+// Never holds per-target state.
 [System.Serializable]
 public abstract class EffectDefinition
 {
