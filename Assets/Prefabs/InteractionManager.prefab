@@ -46,3 +46,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Interact
   mainCamera: {fileID: 0}
   maxDistance: 100
+  attack:
+    damage: 0
+    hitType: 1

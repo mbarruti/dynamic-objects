@@ -49,6 +49,12 @@ public class Interact : MonoBehaviour
             {
                 attack.ApplyHit(dynamicObject);
             }
+            else
+            {
+                ElementSurface surface = hit.collider.GetComponentInParent<ElementSurface>();
+                if (surface != null)
+                    surface.DebugBuildArea(hit.point, 1f);
+            }
         }
     }
 }
