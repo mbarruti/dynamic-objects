@@ -18,9 +18,17 @@ public class SurfaceSettings
     [Tooltip("Spreading points spent to ignite one cell")]
     [Min(0f)] public float spreadCost = 8f;
     [Tooltip("Seconds without ignition before a cell gets its full hitpoints back.")]
-    [Min(0f)] public float recoverDelay = 3f;
+    [Min(0f)] public float recoverDelay = 1f;
     [Tooltip("HP a damaged cell regains per second once its recover delay has passed.")]
-    [Min(0f)] public float regenPerSecond = 2f;
+    [Min(0f)] public float regenPerSecond = 5f;
+
+    [Header("Fire Pulses")]
+    [Tooltip("Interval for element emission")]
+    [Min(0.05f)] public float pulseInterval = 0.5f;
+    [Tooltip("Radius for element emission")]
+    [Min(0f)] public float pulseRadius = 1f;
+    [Tooltip("Burn given to flammable objects that hear a burning cell.")]
+    public BurnEffectDefinition objectEffect = new();
 
     [Header("Projection")]
     [Tooltip("How far above the reference height the ray starts.")]

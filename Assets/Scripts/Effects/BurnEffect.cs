@@ -13,6 +13,16 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
 
     protected override void OnTick(DynamicObjectBehaviour target, float deltaTime)
     {
+        ElementPulses.Emit(new ElementPulse
+        {
+            Element = ElementType.Fire,
+            Position = target.transform.position,
+            Radius = Def.PulseRadius,
+            Amount = Def.PulseDamagePerSecond * deltaTime,
+            SpreadPoints = Def.SpreadPointsPerSecond * deltaTime,
+            Effect = Def,
+            Source = target,
+        });
         target.TakeDamage(Def.DamagePerSecond * deltaTime);
     }
 

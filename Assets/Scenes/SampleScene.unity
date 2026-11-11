@@ -604,8 +604,20 @@ MonoBehaviour:
     tickInterval: 0.1
     cellHitPoints: 10
     burnLifetime: 5
-    burnDamagePerSecond: 5
+    igniteDamagePerSecond: 5
     spreadCost: 8
+    recoverDelay: 3
+    regenPerSecond: 5
+    pulseInterval: 0.5
+    pulseRadius: 1
+    objectEffect:
+      duration: 10
+      tickInterval: 1
+      damagePerSecond: 1
+      hasPulse: 1
+      pulseRadius: 1
+      pulseDamagePerSecond: 5
+      spreadPointsPerSecond: 4
     probeUp: 2
     probeDown: 4
     blockerMask:
@@ -806,6 +818,18 @@ PrefabInstance:
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: maxDistance
       value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.areaAmount
+      value: 100
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.areaRadius
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.spreadPoints
+      value: 400
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

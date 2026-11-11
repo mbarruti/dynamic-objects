@@ -9,10 +9,12 @@ public class Attack
     [SerializeField] private float damage;
     [SerializeField] private HitType hitType;
 
-    // [SerializeReference]
-    // private List<IGameplayProperty> properties = new();
-    [SerializeField]
-    private IElementProperty element;
+    [Header("Area (when it hits the ground)")]
+    [SerializeField] private float areaRadius = 0.5f;
+    [SerializeField] private float areaAmount = 100f;
+    [SerializeField] private float spreadPoints = 60f;
+
+    [SerializeField] private IElementProperty element;
 
     private Hit hit;
 
@@ -34,6 +36,23 @@ public class Attack
         Debug.Log($"Damage done is {hitInfo.Damage}");
 
         target.OnHit(hitInfo);
+    }
+
+    public void ApplyToArea(Vector3 point)
+    {
+        if (element == null)
+            AddElement(new FireProperty());
+
+        ElementPulses.Emit(new ElementPulse
+        {
+            Element = element.Element,
+            Position = point,
+            Radius = areaRadius,
+            Amount = areaAmount,
+            SpreadPoints = element.Element == ElementType.Fire ? spreadPoints : 0f,
+            Effect = element.EffectDefinition,
+            Source = this,
+        });
     }
 
     public void AddElement(IElementProperty newElement)

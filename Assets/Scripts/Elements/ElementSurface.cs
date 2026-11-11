@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Entity/Surface that reacts to elements
-public class ElementSurface : MonoBehaviour
+public class ElementSurface : MonoBehaviour, IElementReceiver
 {
     [SerializeField] private SurfaceSettings settings = new();
     [SerializeField] private bool drawGizmos = true;
@@ -11,6 +11,7 @@ public class ElementSurface : MonoBehaviour
     private readonly List<ElementCell> hitCells = new();
 
     private float tickTimer;
+    private float pulseTimer;
 
     private void Update()
     {
@@ -22,6 +23,13 @@ public class ElementSurface : MonoBehaviour
         {
             tickTimer -= settings.tickInterval;
             grid.Tick(settings.tickInterval);
+        }
+
+        pulseTimer += Time.deltaTime;
+        if (pulseTimer >= settings.pulseInterval)
+        {
+            pulseTimer = 0f;
+            EmitPulses();
         }
     }
 
@@ -51,16 +59,75 @@ public class ElementSurface : MonoBehaviour
     //     }
     // }
 
-    public void DebugIgnite(Vector3 point, float spreadPoints)
+    // public void DebugIgnite(Vector3 point, float spreadPoints)
+    // {
+    //     ElementGrid g = GetOrCreateGrid();
+
+    //     FireBudget budget = new();
+    //     budget.Add(spreadPoints);
+
+    //     g.GetCellsInRadius(point, 0f, hitCells);
+    //     foreach (ElementCell cell in hitCells)
+    //         CellEvaluation.ApplyIgnite(g, cell, settings.cellHitPoints, budget);
+    // }
+
+    // ---------------- Receiving ----------------
+
+    public void ReceivePulse(ElementPulse pulse)
     {
         ElementGrid g = GetOrCreateGrid();
+        g.GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
 
-        FireBudget budget = new();
-        budget.Add(spreadPoints);
+        FireBudget budget = pulse.Element == ElementType.Fire ? ResolveBudget(pulse) : null;
 
-        g.GetCellsInRadius(point, 0f, hitCells);
         foreach (ElementCell cell in hitCells)
-            CellEvaluation.ApplyIgnite(g, cell, settings.cellHitPoints, budget);
+            CellEvaluation.React(g, cell, pulse, budget);
+    }
+
+    private FireBudget ResolveBudget(ElementPulse pulse)
+    {
+        FireBudget budget = pulse.Budget ?? FindFireInHitCells();
+
+        if (budget == null)
+        {
+            if (pulse.SpreadPoints <= 0f)
+                return null;
+            budget = new();
+        }
+
+        budget.Add(pulse.SpreadPoints);
+        return budget;
+    }
+
+    private FireBudget FindFireInHitCells()
+    {
+        foreach (ElementCell cell in hitCells)
+        {
+            if (cell.Budget != null)
+                return cell.Budget;
+        }
+        return null;
+    }
+
+    // ---------------- Sending ----------------
+
+    private void EmitPulses()
+    {
+        IReadOnlyList<ElementCell> burningCells = grid.BurningCells;
+
+        foreach (ElementCell cell in burningCells)
+        {
+            ElementPulses.Emit(new ElementPulse
+            {
+                Element = ElementType.Fire,
+                Position = cell.Position,
+                Radius = settings.pulseRadius,
+                Amount = settings.igniteDamagePerSecond,
+                Budget = cell.Budget,
+                Effect = settings.objectEffect,
+                Source = this
+            });
+        }
     }
 
     private void OnDrawGizmos()
@@ -100,6 +167,4 @@ public class ElementSurface : MonoBehaviour
         // Green when healthy, yellow as fire takes its hitpoints.
         return Color.Lerp(Color.yellow, Color.green, cell.HitPoints / settings.cellHitPoints);
     }
-
-
 }

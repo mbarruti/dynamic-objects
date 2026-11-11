@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable
+public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver
 {
     public DynamicObject Data { get; private set; }
 
@@ -105,4 +105,21 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable
         existing.Refresh(this, incoming.GetDefinition() as TimedEffectDefinition);
         return true;
     }
+
+    public void ReceivePulse(ElementPulse pulse)
+    {
+        switch (pulse.Element)
+        {
+            case ElementType.Fire:
+                if (pulse.Effect == null || HasEffect<BurnEffect>())
+                    return;
+                
+                AddEffects(DynamicEvaluator.EvaluateEffects(
+                    new List<IEffect> {pulse.Effect.CreateInstance()}, Data));
+                break;
+        }
+    }
+
+    public bool HasEffect<T>() where T : IEffect =>
+        currentEffects.Exists(e => e is T && !e.IsFinished);
 }

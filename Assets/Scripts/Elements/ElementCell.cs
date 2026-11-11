@@ -18,9 +18,9 @@ public class ElementCell
     public CellState State;
     public float HitPoints;
     public float Lifetime;
-    public FireBudget Budget;
     public float RecoverTimer;
     public bool IsRecovering = false;
+    public FireBudget Budget;
 
     public ElementCell(Vector2Int coord, Vector3 position, Vector3 normal, CellState state)
     {

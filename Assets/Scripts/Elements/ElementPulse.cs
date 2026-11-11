@@ -1,0 +1,47 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Pool;
+
+public struct ElementPulse
+{
+    public ElementType Element;
+    public Vector3 Position;
+    public float Radius;
+    public float Amount;
+    public float SpreadPoints;
+    public FireBudget Budget;
+    public EffectDefinition Effect;
+    public object Source;
+}
+
+public static class ElementPulses
+{
+    private static readonly Collider[] hits = new Collider[64];
+
+    public static void Emit(ElementPulse pulse)
+    {
+        float radius = Mathf.Max(0.05f, pulse.Radius);
+        int count = Physics.OverlapSphereNonAlloc(pulse.Position, radius, hits,
+                                                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        
+        if (count == hits.Length)
+            Debug.LogWarning($"ElementPulses: buffer full at {pulse.Position}, some receivers may have been skipped");
+        
+        // Collect first, then notify: a receiver could emit its own pulse, which reuses hits list.
+        using(ListPool<IElementReceiver>.Get(out List<IElementReceiver> receivers))
+        {
+            for (int i = 0; i < count; i++)
+            {
+                IElementReceiver receiver = hits[i].GetComponentInParent<IElementReceiver>();
+
+                if (receiver == null || ReferenceEquals(receiver, pulse.Source) || receivers.Contains(receiver))
+                    continue;
+                
+                receivers.Add(receiver);
+            }
+
+            foreach (IElementReceiver receiver in receivers)
+                receiver.ReceivePulse(pulse);
+        }
+    }
+}

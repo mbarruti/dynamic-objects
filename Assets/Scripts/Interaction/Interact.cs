@@ -51,9 +51,7 @@ public class Interact : MonoBehaviour
             }
             else
             {
-                ElementSurface surface = hit.collider.GetComponentInParent<ElementSurface>();
-                if (surface != null)
-                    surface.DebugIgnite(hit.point, 400f);
+                attack.ApplyToArea(hit.point);
             }
         }
     }

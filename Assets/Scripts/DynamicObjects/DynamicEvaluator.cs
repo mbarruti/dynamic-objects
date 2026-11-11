@@ -41,7 +41,7 @@ public static class DynamicEvaluator
         foreach (IEffect effect in effects)
         {
             if (effect == null || !effect.CanAffect(data)) continue;
-            // later: resistance check here
+            // TO-DO: resistance check here
             result.Add(effect);
         }
         return result;
