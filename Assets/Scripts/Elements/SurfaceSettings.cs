@@ -12,6 +12,11 @@ public class SurfaceSettings
     [Min(0.01f)] public float cellHitPoints = 10f;
     [Min(0.01f)] public float burnLifetime = 5f;
 
+    [Tooltip("Damage per second a burning cell deals to each edge neighbour.")]
+    [Min(0f)] public float burnDamagePerSecond = 5f;
+    [Tooltip("Spreading points spent to ignite one cell")]
+    [Min(0f)] public float spreadCost = 8f;
+
     [Header("Projection")]
     [Tooltip("How far above the reference height the ray starts.")]
     [Min(0f)] public float probeUp = 2f;

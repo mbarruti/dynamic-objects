@@ -604,6 +604,8 @@ MonoBehaviour:
     tickInterval: 0.1
     cellHitPoints: 10
     burnLifetime: 5
+    burnDamagePerSecond: 5
+    spreadCost: 8
     probeUp: 2
     probeDown: 4
     blockerMask:

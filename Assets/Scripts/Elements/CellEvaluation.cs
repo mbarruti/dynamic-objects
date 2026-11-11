@@ -2,7 +2,7 @@ using UnityEngine;
 
 public static class CellEvaluation
 {
-    public static void ApplyFire(ElementGrid grid, ElementCell cell, float dmg)
+    public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, FireBudget budget)
     {
         if (cell.State != CellState.Normal)
             return;
@@ -10,6 +10,6 @@ public static class CellEvaluation
         cell.HitPoints = Mathf.Max(0f, cell.HitPoints - dmg);
 
         if (cell.HitPoints <= 0f)
-            grid.TryIgnite(cell);
+            grid.TryBurn(cell, budget);
     }
 }

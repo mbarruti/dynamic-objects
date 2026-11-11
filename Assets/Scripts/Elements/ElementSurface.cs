@@ -40,15 +40,27 @@ public class ElementSurface : MonoBehaviour
     //     Debug.Log($"{name}: {grid.Cells.Count} cells");
     // }
 
-    public void DebugDamage(Vector3 point, float damage)
+    // public void DebugDamage(Vector3 point, float damage)
+    // {
+    //     ElementGrid g = GetOrCreateGrid();
+    //     g.GetCellsInRadius(point, 2f, hitCells);
+
+    //     foreach (ElementCell cell in hitCells)
+    //     {
+    //         CellEvaluation.ApplyFire(g, cell, damage);
+    //     }
+    // }
+
+    public void DebugIgnite(Vector3 point, float spreadPoints)
     {
         ElementGrid g = GetOrCreateGrid();
-        g.GetCellsInRadius(point, 0f, hitCells);
 
+        FireBudget budget = new();
+        budget.Add(spreadPoints);
+
+        g.GetCellsInRadius(point, 0f, hitCells);
         foreach (ElementCell cell in hitCells)
-        {
-            CellEvaluation.ApplyFire(g, cell, damage);
-        }
+            CellEvaluation.ApplyIgnite(g, cell, settings.cellHitPoints, budget);
     }
 
     private void OnDrawGizmos()

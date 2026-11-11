@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// ElementGrid stores the cells of one surface, 
+// creates them by projecting them onto the world 
+// and runs the rules that change them over time, using that surface's settings.
 public class ElementGrid
 {
     private readonly ElementSurface owner;
@@ -10,6 +13,10 @@ public class ElementGrid
     private readonly Collider[] overlapHits = new Collider[16];
     private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> scratch = new();
+    private static readonly Vector2Int[] EdgeNeighbors =
+    {
+        Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
+    };
 
     public IReadOnlyList<ElementCell> BurningCells => burningCells;
 
@@ -96,7 +103,7 @@ public class ElementGrid
 
         return new ElementCell(coord, hit.point, hit.normal, state)
         {
-            HitPoints= settings.cellHitPoints,
+            HitPoints = settings.cellHitPoints,
             Lifetime = settings.burnLifetime
         };
     }
@@ -108,12 +115,16 @@ public class ElementGrid
 
     // State changes
 
-    public bool TryIgnite(ElementCell cell)
+    public bool TryBurn(ElementCell cell, FireBudget budget)
     {
         if (cell.State != CellState.Normal || cell.HitPoints > 0f)
             return false;
         
+        if (budget == null || !budget.TrySpend(settings.spreadCost))
+            return false;
+
         cell.State = CellState.Burning;
+        cell.Budget = budget;
         burningCells.Add(cell);
         return true;
     }
@@ -121,6 +132,7 @@ public class ElementGrid
     private void BurnOut(ElementCell cell)
     {
         cell.State = CellState.Burnt;
+        cell.Budget = null;
         burningCells.Remove(cell);
     }
 
@@ -138,6 +150,14 @@ public class ElementGrid
         for (int i = 0; i < count; i++)
         {
             ElementCell cell = burningCells[i];
+
+            foreach(Vector2Int offset in EdgeNeighbors)
+            {
+                ElementCell neighbor = GetOrCreateCell(cell.Coord + offset, cell.Position.y);
+                if (neighbor != null)
+                    CellEvaluation.ApplyIgnite(this, neighbor, settings.burnDamagePerSecond * dt, cell.Budget);
+            }
+
             cell.Lifetime -= dt;
             if (cell.Lifetime <= 0f)
                 scratch.Add(cell);
