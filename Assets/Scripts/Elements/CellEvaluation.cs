@@ -11,5 +11,8 @@ public static class CellEvaluation
 
         if (cell.HitPoints <= 0f)
             grid.TryBurn(cell, budget);
+        
+        if (cell.State == CellState.Normal)
+            grid.MarkDamaged(cell);
     }
 }

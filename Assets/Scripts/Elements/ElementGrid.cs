@@ -13,6 +13,7 @@ public class ElementGrid
     private readonly Collider[] overlapHits = new Collider[16];
     private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> scratch = new();
+    private readonly List<ElementCell> recoveringCells = new();
     private static readonly Vector2Int[] EdgeNeighbors =
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
@@ -104,7 +105,7 @@ public class ElementGrid
         return new ElementCell(coord, hit.point, hit.normal, state)
         {
             HitPoints = settings.cellHitPoints,
-            Lifetime = settings.burnLifetime
+            Lifetime = settings.burnLifetime,
         };
     }
 
@@ -141,6 +142,7 @@ public class ElementGrid
     public void Tick(float dt)
     {
         UpdateBurning(dt);
+        UpdateRecovering(dt);
     }
 
     private void UpdateBurning(float dt)
@@ -155,7 +157,7 @@ public class ElementGrid
             {
                 ElementCell neighbor = GetOrCreateCell(cell.Coord + offset, cell.Position.y);
                 if (neighbor != null)
-                    CellEvaluation.ApplyIgnite(this, neighbor, settings.burnDamagePerSecond * dt, cell.Budget);
+                    CellEvaluation.ApplyIgnite(this, neighbor, settings.igniteDamagePerSecond * dt, cell.Budget);
             }
 
             cell.Lifetime -= dt;
@@ -168,6 +170,42 @@ public class ElementGrid
         
         scratch.Clear();
     }
+    
+    public void MarkDamaged(ElementCell cell)
+    {
+        cell.RecoverTimer = settings.recoverDelay;
+
+        if (!cell.IsRecovering)
+        {
+            cell.IsRecovering = true;
+            recoveringCells.Add(cell);
+        }
+    }
+
+    private void UpdateRecovering(float dt)
+    {
+        for (int i = recoveringCells.Count - 1; i >= 0; i--)
+        {
+            ElementCell cell = recoveringCells[i];
+
+            if (cell.State == CellState.Normal)
+            {
+                cell.RecoverTimer -= dt;
+                if (cell.RecoverTimer > 0f)
+                    continue;
+                
+                cell.HitPoints = Mathf.Min(settings.cellHitPoints,
+                                            cell.HitPoints + settings.regenPerSecond * dt);
+                if (cell.HitPoints < settings.cellHitPoints)
+                    continue;
+            }
+
+            cell.IsRecovering = false;
+            recoveringCells.RemoveAt(i);
+        }
+    }
+
+    // Misc
 
     private static float FlatDistance(Vector3 a, Vector3 b) =>
         Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
