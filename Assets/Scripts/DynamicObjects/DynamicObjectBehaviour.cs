@@ -9,6 +9,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     protected virtual bool IsDamageable { get; } = false;
     protected virtual float HitPoints { get; } = 10f;
     protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
+
     protected virtual bool Flammable { get; } = false;
     protected virtual bool Conductor { get; } = false;
 
@@ -108,18 +109,42 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     public void ReceivePulse(ElementPulse pulse)
     {
-        switch (pulse.Element)
+        switch (pulse.Type)
         {
             case ElementType.Fire:
-                if (pulse.Effect == null || HasEffect<BurnEffect>())
+                if (TryGetEffect(out BurnEffect burning))
+                {
+                    burning.Budget = FireBudget.Join(burning.Budget, pulse.Budget);
                     return;
-                
-                AddEffects(DynamicEvaluator.EvaluateEffects(
-                    new List<IEffect> {pulse.Effect.CreateInstance()}, Data));
+                }
+
+                if (pulse.EffectDef == null)
+                    return;
+
+                IEffect effect = pulse.EffectDef.CreateInstance();
+                if (effect is BurnEffect burn)
+                    burn.Budget = pulse.Budget?.Root;
+
+                AddEffects(DynamicEvaluator.EvaluateEffects(new List<IEffect> { effect }, Data));
                 break;
         }
     }
 
     public bool HasEffect<T>() where T : IEffect =>
         currentEffects.Exists(e => e is T && !e.IsFinished);
+
+    public bool TryGetEffect<T>(out T effect) where T : class, IEffect
+    {
+        foreach (IEffect e in currentEffects)
+        {
+            if (e is T match && !e.IsFinished)
+            {
+                effect = match;
+                return true;
+            }
+        }
+
+        effect = null;
+        return false;
+    }
 }

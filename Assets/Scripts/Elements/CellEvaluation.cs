@@ -4,7 +4,7 @@ public static class CellEvaluation
 {
     public static void React(ElementGrid grid, ElementCell cell, ElementPulse pulse, FireBudget budget)
     {
-        switch (pulse.Element)
+        switch (pulse.Type)
         {
             case ElementType.Fire:
                 ApplyIgnite(grid, cell, pulse.Amount, budget);

@@ -2,12 +2,15 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Entity/Surface that reacts to elements
-public class ElementSurface : MonoBehaviour, IElementReceiver
+public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
 {
     [SerializeField] private SurfaceSettings settings = new();
     [SerializeField] private bool drawGizmos = true;
-    private ElementGrid grid;
+    [SerializeField] private PulseSettings pulseData = new();
 
+    public PulseSettings PulseData => pulseData;
+
+    private ElementGrid grid;
     private readonly List<ElementCell> hitCells = new();
 
     private float tickTimer;
@@ -28,7 +31,7 @@ public class ElementSurface : MonoBehaviour, IElementReceiver
         pulseTimer += Time.deltaTime;
         if (pulseTimer >= settings.pulseInterval)
         {
-            pulseTimer = 0f;
+            pulseTimer -= settings.pulseInterval;
             EmitPulses();
         }
     }
@@ -42,35 +45,6 @@ public class ElementSurface : MonoBehaviour, IElementReceiver
         return grid;
     }
 
-    // public void DebugBuildArea(Vector3 point, float radius)
-    // {
-    //     GetOrCreateGrid().GetCellsInRadius(point, radius, hitCells);
-    //     Debug.Log($"{name}: {grid.Cells.Count} cells");
-    // }
-
-    // public void DebugDamage(Vector3 point, float damage)
-    // {
-    //     ElementGrid g = GetOrCreateGrid();
-    //     g.GetCellsInRadius(point, 2f, hitCells);
-
-    //     foreach (ElementCell cell in hitCells)
-    //     {
-    //         CellEvaluation.ApplyFire(g, cell, damage);
-    //     }
-    // }
-
-    // public void DebugIgnite(Vector3 point, float spreadPoints)
-    // {
-    //     ElementGrid g = GetOrCreateGrid();
-
-    //     FireBudget budget = new();
-    //     budget.Add(spreadPoints);
-
-    //     g.GetCellsInRadius(point, 0f, hitCells);
-    //     foreach (ElementCell cell in hitCells)
-    //         CellEvaluation.ApplyIgnite(g, cell, settings.cellHitPoints, budget);
-    // }
-
     // ---------------- Receiving ----------------
 
     public void ReceivePulse(ElementPulse pulse)
@@ -78,25 +52,12 @@ public class ElementSurface : MonoBehaviour, IElementReceiver
         ElementGrid g = GetOrCreateGrid();
         g.GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
 
-        FireBudget budget = pulse.Element == ElementType.Fire ? ResolveBudget(pulse) : null;
+        FireBudget budget = pulse.Type == ElementType.Fire
+            ? FireBudget.Join(FindFireInHitCells(), pulse.Budget)
+            : null;
 
         foreach (ElementCell cell in hitCells)
             CellEvaluation.React(g, cell, pulse, budget);
-    }
-
-    private FireBudget ResolveBudget(ElementPulse pulse)
-    {
-        FireBudget budget = pulse.Budget ?? FindFireInHitCells();
-
-        if (budget == null)
-        {
-            if (pulse.SpreadPoints <= 0f)
-                return null;
-            budget = new();
-        }
-
-        budget.Add(pulse.SpreadPoints);
-        return budget;
     }
 
     private FireBudget FindFireInHitCells()
@@ -111,7 +72,7 @@ public class ElementSurface : MonoBehaviour, IElementReceiver
 
     // ---------------- Sending ----------------
 
-    private void EmitPulses()
+    public void EmitPulses()
     {
         IReadOnlyList<ElementCell> burningCells = grid.BurningCells;
 
@@ -119,12 +80,12 @@ public class ElementSurface : MonoBehaviour, IElementReceiver
         {
             ElementPulses.Emit(new ElementPulse
             {
-                Element = ElementType.Fire,
+                Type = ElementType.Fire,
                 Position = cell.Position,
                 Radius = settings.pulseRadius,
-                Amount = settings.igniteDamagePerSecond,
+                Amount = pulseData.amount,
                 Budget = cell.Budget,
-                Effect = settings.objectEffect,
+                EffectDef = settings.objectEffect,
                 Source = this
             });
         }

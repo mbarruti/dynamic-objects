@@ -604,9 +604,9 @@ MonoBehaviour:
     tickInterval: 0.1
     cellHitPoints: 10
     burnLifetime: 5
-    igniteDamagePerSecond: 5
+    igniteDamagePerSecond: 3
     spreadCost: 8
-    recoverDelay: 3
+    recoverDelay: 1
     regenPerSecond: 5
     pulseInterval: 0.5
     pulseRadius: 1
@@ -614,16 +614,20 @@ MonoBehaviour:
       duration: 10
       tickInterval: 1
       damagePerSecond: 1
-      hasPulse: 1
-      pulseRadius: 1
-      pulseDamagePerSecond: 5
-      spreadPointsPerSecond: 4
+      pulseData:
+        radius: 1
+        amount: 5
+        spreadPoints: 0
     probeUp: 2
     probeDown: 4
     blockerMask:
       serializedVersion: 2
       m_Bits: 4294967295
   drawGizmos: 1
+  pulseData:
+    radius: 1
+    amount: 3
+    spreadPoints: 0
 --- !u!65 &1606702231
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -829,7 +833,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.spreadPoints
-      value: 400
+      value: 300
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.burn.pulseData.spreadPoints
+      value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

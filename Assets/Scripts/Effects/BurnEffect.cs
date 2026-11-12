@@ -2,25 +2,31 @@ using UnityEngine;
 
 public class BurnEffect : TimedEffect<BurnEffectDefinition>
 {
+    public FireBudget Budget { get; set; }
+
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
 
     public override bool CanAffect(DynamicObject target) => target.Flammable;
 
     protected override void OnApply(DynamicObjectBehaviour target)
     {
-        Debug.Log($"{target.name} started burning for {Def.Duration}s");
+        Budget ??= new FireBudget();
+        Debug.Log($"{target.name} is burning for {Def.Duration}s");
     }
 
     protected override void OnTick(DynamicObjectBehaviour target, float deltaTime)
     {
+        Budget.Add(Def.PulseData.spreadPoints);
+
         ElementPulses.Emit(new ElementPulse
         {
-            Element = ElementType.Fire,
+            Type = Def.Element,
             Position = target.transform.position,
-            Radius = Def.PulseRadius,
-            Amount = Def.PulseDamagePerSecond * deltaTime,
-            SpreadPoints = Def.SpreadPointsPerSecond * deltaTime,
-            Effect = Def,
+            Radius = Def.PulseData.radius,
+            Amount = Def.PulseData.amount,
+            SpreadPoints = Def.PulseData.spreadPoints,
+            Budget = Budget,
+            EffectDef = Def,
             Source = target,
         });
         target.TakeDamage(Def.DamagePerSecond * deltaTime);

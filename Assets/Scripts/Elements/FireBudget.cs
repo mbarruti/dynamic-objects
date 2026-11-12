@@ -2,16 +2,47 @@ using UnityEngine;
 
 public class FireBudget
 {
-    public float SpreadPoints { get; private set; }
+    private float spreadPoints;
+    private FireBudget mergedInto;
 
-    public void Add(float points) => SpreadPoints += Mathf.Max(0f, points);
+    public FireBudget(float points = 0f) => spreadPoints = Mathf.Max(0f, points);
+
+    public FireBudget Root
+    {
+        get
+        {
+            // Path compresion
+            if (mergedInto == null) return this;
+            mergedInto = mergedInto.Root;
+            return mergedInto;
+        }
+    }
+
+    public float SpreadPoints => Root.spreadPoints;
+    public void Add(float points) => Root.spreadPoints += Mathf.Max(0f, points);
 
     public bool TrySpend(float cost)
     {
-        if (SpreadPoints < cost)
+        if (Root.spreadPoints < cost)
             return false;
-        
-        SpreadPoints -= cost;
+        Root.spreadPoints -= cost;
         return true;
+    }
+
+    public static FireBudget Join(FireBudget local, FireBudget incoming)
+    {
+        if (local == null) return incoming?.Root;
+        if (incoming == null) return local.Root;
+        
+        FireBudget a = local.Root;
+        FireBudget b = incoming.Root;
+
+        // Same fire
+        if (a == b) return a;
+
+        a.spreadPoints += b.spreadPoints;
+        b.spreadPoints = 0f;
+        b.mergedInto = a;
+        return a;
     }
 }

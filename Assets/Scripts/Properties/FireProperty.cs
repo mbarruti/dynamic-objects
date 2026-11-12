@@ -5,7 +5,7 @@ public class FireProperty : IElementProperty
 {
     [SerializeField] private BurnEffectDefinition burn = new();
 
-    public ElementType Element => ElementType.Fire;
+    public ElementType Type => ElementType.Fire;
 
-    public EffectDefinition EffectDefinition => burn;
+    public EffectDefinition Def => burn;
 }

@@ -4,13 +4,13 @@ using UnityEngine.Pool;
 
 public struct ElementPulse
 {
-    public ElementType Element;
+    public ElementType Type;
     public Vector3 Position;
     public float Radius;
     public float Amount;
     public float SpreadPoints;
     public FireBudget Budget;
-    public EffectDefinition Effect;
+    public EffectDefinition EffectDef;
     public object Source;
 }
 
@@ -44,4 +44,17 @@ public static class ElementPulses
                 receiver.ReceivePulse(pulse);
         }
     }
+}
+
+[System.Serializable]
+public class PulseSettings
+{
+    [Min(0f)] public float radius;
+    [Min(0f)] public float amount;
+    [Min(0f)] public float spreadPoints;
+}
+
+public interface IElementEmitter
+{
+    PulseSettings PulseData { get; }
 }

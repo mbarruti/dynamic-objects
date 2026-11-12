@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using static DynamicEvaluator;
-using static HitType;
 
 [System.Serializable]
 public class Attack
@@ -9,26 +8,27 @@ public class Attack
     [SerializeField] private float damage;
     [SerializeField] private HitType hitType;
 
-    [Header("Area (when it hits the ground)")]
-    [SerializeField] private float areaRadius = 0.5f;
+    [Header("AOE")]
+    [SerializeField] private float areaRadius = 2f;
     [SerializeField] private float areaAmount = 100f;
-    [SerializeField] private float spreadPoints = 60f;
+    [SerializeField] private float spreadPoints = 300f;
 
+    [Header("Element")]
+    [SerializeField] private FireProperty fireElement = new();
     [SerializeField] private IElementProperty element;
 
     private Hit hit;
 
     public void ApplyHit(DynamicObjectBehaviour target)
     {
-        FireProperty fireElement = new();
         AddElement(fireElement);
 
         List<IEffect> effects = new()
         {
-            element.EffectDefinition.CreateInstance()
+            element.Def.CreateInstance()
         };
 
-        hit = new(damage, hitType, element.Element, effects);
+        hit = new(damage, hitType, element.Type, effects);
 
         HitEvaluation evaluation = Evaluate(hit, target.Data);
         HitInfo hitInfo = new(this, evaluation.FinalDamage, hit.HitType, hit.ElementType, evaluation.Effects);
@@ -43,14 +43,20 @@ public class Attack
         if (element == null)
             AddElement(new FireProperty());
 
+        FireBudget budget = null;
+        if (element.Type == ElementType.Fire)
+        {
+            budget = new FireBudget();
+            budget.Add(spreadPoints);
+        }
+
         ElementPulses.Emit(new ElementPulse
         {
-            Element = element.Element,
+            Type = element.Type,
             Position = point,
             Radius = areaRadius,
             Amount = areaAmount,
-            SpreadPoints = element.Element == ElementType.Fire ? spreadPoints : 0f,
-            Effect = element.EffectDefinition,
+            Budget = budget,
             Source = this,
         });
     }
