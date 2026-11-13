@@ -30,7 +30,10 @@ public class Interact : MonoBehaviour
             IInteractable interactable =
                 hit.collider.GetComponentInParent<IInteractable>();
 
-            interactable?.Apply();
+            if (interactable is DynamicObjectBehaviour dynamicObject)
+            {
+                attack.ApplyHit(dynamicObject);
+            }
         }
     }
 
@@ -42,17 +45,7 @@ public class Interact : MonoBehaviour
 
         if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
         {
-            IInteractable interactable =
-                hit.collider.GetComponentInParent<IInteractable>();
-
-            if (interactable is DynamicObjectBehaviour dynamicObject)
-            {
-                attack.ApplyHit(dynamicObject);
-            }
-            else
-            {
                 attack.ApplyToArea(hit.point);
-            }
         }
     }
 }

@@ -30,7 +30,7 @@ public class Attack
 
         hit = new(damage, hitType, element.Type, defs);
 
-        HitEvaluation evaluation = Evaluate(hit, target.Data);
+        HitEvaluation evaluation = EvaluateHit(hit, target.Data);
         HitInfo hitInfo = new(this, evaluation.FinalDamage, hit.HitType, hit.ElementType, evaluation.Defs);
 
         // Debug.Log($"Damage done is {hitInfo.Damage}");

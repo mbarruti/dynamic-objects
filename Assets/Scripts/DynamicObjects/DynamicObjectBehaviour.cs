@@ -4,18 +4,20 @@ using UnityEngine;
 
 public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver
 {
+    [SerializeField] private ElementMeterSettings meterSettings = new();
+    private ElementMeter meter;
+    private List<IEffect> currentEffects = new();
+
     public DynamicObject Data { get; private set; }
 
     protected virtual bool IsDamageable { get; } = false;
     protected virtual float HitPoints { get; } = 10f;
-    protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
 
+    protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
     protected virtual bool Flammable { get; } = false;
     protected virtual bool Conductor { get; } = false;
 
     public float CurrentHP { get; protected set; }
-
-    private List<IEffect> currentEffects = new();
 
     protected virtual void Awake()
     {
@@ -34,6 +36,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         );
 
         CurrentHP = HitPoints;
+        meter = new ElementMeter(meterSettings);
     }
 
     public virtual void Apply()

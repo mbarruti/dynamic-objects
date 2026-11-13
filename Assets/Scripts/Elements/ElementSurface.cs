@@ -139,6 +139,6 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
         }
 
         // Green when healthy, yellow as fire takes its hitpoints.
-        return Color.Lerp(Color.yellow, Color.green, cell.HitPoints / settings.cellHitPoints);
+        return Color.Lerp(Color.yellow, Color.green, cell.Meter.Value / settings.meterSettings.value);
     }
 }

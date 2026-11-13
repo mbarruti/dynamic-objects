@@ -8,19 +8,15 @@ public class SurfaceSettings
     [Min(1)] public int maxCells = 4096;
     [Min(0.01f)] public float tickInterval = 0.1f;
 
-    [Header("Fire")]
-    [Tooltip("Hit points damaged when a cell is being ignited")]
-    [Min(0.01f)] public float cellHitPoints = 10f;
+    [Header("Element")]
     [Tooltip("Lifetime of a burning cell until burn out.")]
     [Min(0.01f)] public float burnLifetime = 5f;
     [Tooltip("Damage per second a burning cell deals to each neighbor cell to ignite it.")]
     [Min(0f)] public float igniteDamagePerSecond = 5f;
     [Tooltip("Spreading points spent to ignite one cell")]
     [Min(0f)] public float spreadCost = 8f;
-    [Tooltip("Seconds without ignition before a cell gets its full hitpoints back.")]
-    [Min(0f)] public float recoverDelay = 1f;
-    [Tooltip("HP a damaged cell regains per second once its recover delay has passed.")]
-    [Min(0f)] public float regenPerSecond = 5f;
+    [Tooltip("Meter threshold before an element takes effect")]
+    public ElementMeterSettings meterSettings = new();
 
     [Header("Fire Pulses")]
     [Tooltip("Interval for element emission")]

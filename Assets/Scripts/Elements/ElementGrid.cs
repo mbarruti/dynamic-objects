@@ -14,10 +14,14 @@ public class ElementGrid
     private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> scratch = new();
     private readonly List<ElementCell> recoveringCells = new();
+    // TO-DO: make neighbor search with more variability,
+    // not the same order everytime or implement wind effect
     private static readonly Vector2Int[] EdgeNeighbors =
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
     };
+
+    public SurfaceSettings Settings => settings;
 
     public IReadOnlyList<ElementCell> BurningCells => burningCells;
 
@@ -104,7 +108,7 @@ public class ElementGrid
 
         return new ElementCell(coord, hit.point, hit.normal, state)
         {
-            HitPoints = settings.cellHitPoints,
+            Meter = new(settings.meterSettings),
             Lifetime = settings.burnLifetime,
         };
     }
@@ -118,7 +122,7 @@ public class ElementGrid
 
     public bool TryBurn(ElementCell cell, FireBudget budget)
     {
-        if (cell.State != CellState.Normal || cell.HitPoints > 0f)
+        if (cell.State != CellState.Normal || cell.Meter.Value > 0f)
             return false;
         
         if (budget == null || !budget.TrySpend(settings.spreadCost))
@@ -173,7 +177,7 @@ public class ElementGrid
     
     public void MarkDamaged(ElementCell cell)
     {
-        cell.RecoverTimer = settings.recoverDelay;
+        // cell.RecoverTimer = settings.recoverDelay;
 
         if (!cell.IsRecovering)
         {
@@ -188,16 +192,9 @@ public class ElementGrid
         {
             ElementCell cell = recoveringCells[i];
 
-            if (cell.State == CellState.Normal)
+            if (cell.State == CellState.Normal && !cell.Meter.RecoveryTick(dt, settings.meterSettings))
             {
-                cell.RecoverTimer -= dt;
-                if (cell.RecoverTimer > 0f)
-                    continue;
-                
-                cell.HitPoints = Mathf.Min(settings.cellHitPoints,
-                                            cell.HitPoints + settings.regenPerSecond * dt);
-                if (cell.HitPoints < settings.cellHitPoints)
-                    continue;
+                continue;
             }
 
             cell.IsRecovering = false;

@@ -18,7 +18,7 @@ public static class DynamicEvaluator
         { (HitType.Blunt,  ObjectMaterial.Metal), 0.5f },
     };
 
-    public static HitEvaluation Evaluate(Hit hit, DynamicObject data)
+    public static HitEvaluation EvaluateHit(Hit hit, DynamicObject data)
     {
         float damage = EvaluateDamage(hit, data);
         List<EffectDefinition> defs = EvaluateEffects(hit.EffectDefs, data);

@@ -17,9 +17,7 @@ public static class CellEvaluation
         if (cell.State != CellState.Normal)
             return;
 
-        cell.HitPoints = Mathf.Max(0f, cell.HitPoints - dmg);
-
-        if (cell.HitPoints <= 0f)
+        if (cell.Meter.Damage(dmg, grid.Settings.meterSettings))
             grid.TryBurn(cell, budget);
         
         if (cell.State == CellState.Normal)

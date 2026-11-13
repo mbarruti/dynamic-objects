@@ -16,9 +16,8 @@ public class ElementCell
     public readonly Vector3 Normal;
 
     public CellState State;
-    public float HitPoints;
+    public ElementMeter Meter;
     public float Lifetime;
-    public float RecoverTimer;
     public bool IsRecovering = false;
     public FireBudget Budget;
 
