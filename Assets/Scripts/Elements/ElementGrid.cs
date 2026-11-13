@@ -125,7 +125,7 @@ public class ElementGrid
             return false;
 
         cell.State = CellState.Burning;
-        cell.Budget = budget;
+        cell.Budget = budget.Root;
         burningCells.Add(cell);
         return true;
     }

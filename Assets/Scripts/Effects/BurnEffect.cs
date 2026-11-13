@@ -6,8 +6,6 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
 
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
 
-    public override bool CanAffect(DynamicObject target) => target.Flammable;
-
     protected override void OnApply(DynamicObjectBehaviour target)
     {
         Budget ??= new FireBudget();
@@ -24,7 +22,6 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
             Position = target.transform.position,
             Radius = Def.PulseData.radius,
             Amount = Def.PulseData.amount,
-            SpreadPoints = Def.PulseData.spreadPoints,
             Budget = Budget,
             EffectDef = Def,
             Source = target,
@@ -36,4 +33,6 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
     {
         Debug.Log($"{target.name} stopped burning");
     }
+
+    public override bool CanAffect(DynamicObject target) => Def.CanAffect(target);
 }

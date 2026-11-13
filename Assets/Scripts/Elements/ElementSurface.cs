@@ -61,13 +61,14 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
     }
 
     private FireBudget FindFireInHitCells()
-    {
+    {   
+        FireBudget budget = null;
         foreach (ElementCell cell in hitCells)
         {
             if (cell.Budget != null)
-                return cell.Budget;
+                budget = FireBudget.Join(cell.Budget, budget);
         }
-        return null;
+        return budget;
     }
 
     // ---------------- Sending ----------------

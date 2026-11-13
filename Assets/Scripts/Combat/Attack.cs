@@ -41,7 +41,7 @@ public class Attack
     public void ApplyToArea(Vector3 point)
     {
         if (element == null)
-            AddElement(new FireProperty());
+            AddElement(fireElement);
 
         FireBudget budget = null;
         if (element.Type == ElementType.Fire)

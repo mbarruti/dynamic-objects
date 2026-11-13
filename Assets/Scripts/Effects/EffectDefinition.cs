@@ -3,7 +3,7 @@
 [System.Serializable]
 public abstract class EffectDefinition
 {
-    // Creates a new runtime instance for one target.
     public abstract IEffect CreateInstance();
     public abstract ElementType Element { get; }
+    public virtual bool CanAffect(DynamicObject target) => true;
 }

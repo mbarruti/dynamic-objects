@@ -77,20 +77,21 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     public virtual void AddEffects(List<IEffect> effects)
     {
-        if (effects == null || (CurrentHP <= 0 && IsDamageable))
+        if (effects == null) return;
+        foreach (IEffect effect in effects)
+            AddEffect(effect);
+    }
+
+    public void AddEffect(IEffect effect)
+    {
+        if (effect == null || (CurrentHP <= 0 && IsDamageable))
             return;
 
-        foreach (IEffect effect in effects)
-        {
-            if (effect == null)
-                continue;
+        if (TryRefresh(effect))
+            return;
 
-            if (TryRefresh(effect))
-                continue;
-
-            currentEffects.Add(effect);
-            effect.Apply(this);
-        }
+        currentEffects.Add(effect);
+        effect.Apply(this);
     }
 
     // Non-stacking timed effect already active: restart it instead of adding a second one.
@@ -118,14 +119,14 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
                     return;
                 }
 
-                if (pulse.EffectDef == null)
+                if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(Data))
                     return;
 
                 IEffect effect = pulse.EffectDef.CreateInstance();
                 if (effect is BurnEffect burn)
                     burn.Budget = pulse.Budget?.Root;
 
-                AddEffects(DynamicEvaluator.EvaluateEffects(new List<IEffect> { effect }, Data));
+                AddEffect(effect);
                 break;
         }
     }

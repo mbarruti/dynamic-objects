@@ -8,7 +8,7 @@ public struct ElementPulse
     public Vector3 Position;
     public float Radius;
     public float Amount;
-    public float SpreadPoints;
+    // public float SpreadPoints;
     public FireBudget Budget;
     public EffectDefinition EffectDef;
     public object Source;
