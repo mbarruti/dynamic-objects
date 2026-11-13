@@ -5,8 +5,11 @@ using UnityEngine;
 public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
 {
     [SerializeField] private SurfaceSettings settings = new();
-    [SerializeField] private bool drawGizmos = true;
     [SerializeField] private PulseSettings pulseData = new();
+
+    [Header("Dev")]
+    [SerializeField] private bool drawGizmos = true;
+    [SerializeField] private bool drawLifetime = false;
 
     public PulseSettings PulseData => pulseData;
 
@@ -105,9 +108,18 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
             Vector3 p = cell.Position + Vector3.up * 0.02f;
 
             if (cell.State == CellState.Burning || cell.State == CellState.Burnt)
-                Gizmos.DrawCube(p, new Vector3(size, 0.02f, size));
+                // Gizmos.DrawCube(p, new Vector3(size, 0.02f, size));
+            {
+                float k = cell.Lifetime / settings.burnLifetime;          // 1 → 0
+                Gizmos.DrawCube(p, new Vector3(size * k, 0.02f, size * k));
+            }
             else
                 Gizmos.DrawWireCube(p, new Vector3(size, 0f, size));
+
+            #if UNITY_EDITOR
+                if (drawLifetime && cell.State == CellState.Burning)
+                    UnityEditor.Handles.Label(p + Vector3.up * 0.1f, cell.Lifetime.ToString("0.0"));
+            #endif
 
             // if (cell.State != CellState.Disabled)
             // {

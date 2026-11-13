@@ -18,6 +18,22 @@ public static class ElementPulses
 {
     private static readonly Collider[] hits = new Collider[64];
 
+    // ------- Dev --------
+    public struct PulseRecord
+    {
+        public Vector3 Position;
+        public float Radius;
+        public ElementType Type;
+        public int Receivers;
+        public float Time;
+    }
+
+    // Debug only: filled while a PulseGizmos component is active.
+    public static bool Record;
+    public static readonly List<PulseRecord> Recent = new();
+
+    // -----------------------
+
     public static void Emit(ElementPulse pulse)
     {
         float radius = Mathf.Max(0.05f, pulse.Radius);
@@ -38,6 +54,19 @@ public static class ElementPulses
                     continue;
                 
                 receivers.Add(receiver);
+            }
+
+            // Dev
+            if (Record)
+            {
+                Recent.Add(new PulseRecord
+                {
+                    Position = pulse.Position,
+                    Radius = radius,                 // the clamped one, i.e. what OverlapSphere used
+                    Type = pulse.Type,
+                    Receivers = receivers.Count,
+                    Time = Time.time,
+                });
             }
 
             foreach (IElementReceiver receiver in receivers)
