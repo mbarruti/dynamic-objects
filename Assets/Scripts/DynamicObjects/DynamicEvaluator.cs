@@ -21,9 +21,9 @@ public static class DynamicEvaluator
     public static HitEvaluation Evaluate(Hit hit, DynamicObject data)
     {
         float damage = EvaluateDamage(hit, data);
-        List<IEffect> effects = EvaluateEffects(hit.Effects, data);
+        List<EffectDefinition> defs = EvaluateEffects(hit.EffectDefs, data);
 
-        return new HitEvaluation(damage, effects);
+        return new HitEvaluation(damage, defs);
     }
 
     private static float EvaluateDamage(Hit hit, DynamicObject data)
@@ -33,16 +33,16 @@ public static class DynamicEvaluator
         // later: element modifiers (like fire vs wood)
     }
 
-    public static List<IEffect> EvaluateEffects(List<IEffect> effects, DynamicObject data)
+    public static List<EffectDefinition> EvaluateEffects(List<EffectDefinition> defs, DynamicObject data)
     {
-        List<IEffect> result = new();
-        if (effects == null) return result;
+        List<EffectDefinition> result = new();
+        if (defs == null) return result;
 
-        foreach (IEffect effect in effects)
+        foreach (EffectDefinition def in defs)
         {
-            if (effect == null || !effect.CanAffect(data)) continue;
+            if (def == null || !def.CanAffect(data)) continue;
             // TO-DO: resistance check here
-            result.Add(effect);
+            result.Add(def);
         }
         return result;
     }

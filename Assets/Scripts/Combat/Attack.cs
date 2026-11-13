@@ -23,17 +23,17 @@ public class Attack
     {
         AddElement(fireElement);
 
-        List<IEffect> effects = new()
+        List<EffectDefinition> defs = new()
         {
-            element.Def.CreateInstance()
+            element.Def
         };
 
-        hit = new(damage, hitType, element.Type, effects);
+        hit = new(damage, hitType, element.Type, defs);
 
         HitEvaluation evaluation = Evaluate(hit, target.Data);
-        HitInfo hitInfo = new(this, evaluation.FinalDamage, hit.HitType, hit.ElementType, evaluation.Effects);
+        HitInfo hitInfo = new(this, evaluation.FinalDamage, hit.HitType, hit.ElementType, evaluation.Defs);
 
-        Debug.Log($"Damage done is {hitInfo.Damage}");
+        // Debug.Log($"Damage done is {hitInfo.Damage}");
 
         target.OnHit(hitInfo);
     }
@@ -57,6 +57,7 @@ public class Attack
             Radius = areaRadius,
             Amount = areaAmount,
             Budget = budget,
+            EffectDef = element.Def,
             Source = this,
         });
     }

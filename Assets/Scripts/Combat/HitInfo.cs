@@ -7,14 +7,14 @@ public class HitInfo
     public readonly float Damage;
     public readonly HitType HitType;
     public readonly ElementType ElementType;
-    public readonly List<IEffect> Effects;
+    public readonly List<EffectDefinition> EffectDefs;
 
-    public HitInfo(Attack owner, float damage, HitType hitType, ElementType elementType, List<IEffect> effects)
+    public HitInfo(Attack owner, float damage, HitType hitType, ElementType elementType, List<EffectDefinition> effectDefs)
     {
         Owner = owner;
         Damage = damage;
         HitType = hitType;
         ElementType = elementType;
-        Effects = effects;
+        EffectDefs = effectDefs;
     }
 }

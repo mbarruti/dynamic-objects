@@ -3,11 +3,11 @@ using System.Collections.Generic;
 public class HitEvaluation
 {
     public float FinalDamage { get; }
-    public List<IEffect> Effects { get; }
+    public List<EffectDefinition> Defs { get; }
 
-    public HitEvaluation(float finalDamage, List<IEffect> effects)
+    public HitEvaluation(float finalDamage, List<EffectDefinition> defs)
     {
         FinalDamage = finalDamage;
-        Effects = effects;
+        Defs = defs;
     }
 }

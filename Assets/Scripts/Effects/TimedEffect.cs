@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 
 // Base for effects that last a duration and tick at an interval (burn, poison, ...).
@@ -6,7 +5,8 @@ using UnityEngine;
 // Non-generic so DynamicObjectBehaviour can check `existing is TimedEffect` without knowing the definition type.
 public abstract class TimedEffect : IEffect
 {
-    private Coroutine routine;
+    private const float Epsilon = 0.0001f;
+    private float tickTimer;
 
     protected TimedEffectDefinition Definition { get; set; }
 
@@ -14,8 +14,6 @@ public abstract class TimedEffect : IEffect
     protected float Elapsed { get; private set; }
 
     public bool IsFinished { get; private set; }
-
-    public virtual bool CanStack => false;
 
     public DynamicObjectBehaviour Target { get; private set; }
 
@@ -33,7 +31,6 @@ public abstract class TimedEffect : IEffect
     {
         Target = target;
         OnApply(target);
-        StartTimer(target);
     }
 
     // Restarts the timer from zero.
@@ -42,18 +39,15 @@ public abstract class TimedEffect : IEffect
         if (definition != null && definition.GetType() == Definition.GetType())
             Definition = definition;
 
-        StopTimer(target);
-
+        Elapsed = 0f;
         // May have finished this frame but not been removed by Update yet.
         IsFinished = false;
 
         OnRefresh(target);
-        StartTimer(target);
     }
 
     public void Remove(DynamicObjectBehaviour target)
     {
-        StopTimer(target);
         OnRemove(target);
     }
 
@@ -61,7 +55,6 @@ public abstract class TimedEffect : IEffect
 
     protected virtual void OnApply(DynamicObjectBehaviour target) { }
 
-    // Called after each interval. `deltaTime` is the interval length (last one may be shorter).
     protected virtual void OnTick(DynamicObjectBehaviour target, float deltaTime) { }
 
     protected virtual void OnRefresh(DynamicObjectBehaviour target) { }
@@ -70,37 +63,28 @@ public abstract class TimedEffect : IEffect
 
     // --- Timer ---
 
-    private void StartTimer(DynamicObjectBehaviour target)
+    public void Tick(float deltaTime)
     {
-        routine = target.StartCoroutine(Run(target));
-    }
-
-    private void StopTimer(DynamicObjectBehaviour target)
-    {
-        if (routine == null)
+        if (IsFinished)
             return;
 
-        target.StopCoroutine(routine);
-        routine = null;
-    }
+        // Don't advance past the end of the duration.
+        float dt = Mathf.Min(deltaTime, Definition.Duration - Elapsed);
+        Elapsed += dt;
+        tickTimer += dt;
 
-    private IEnumerator Run(DynamicObjectBehaviour target)
-    {
-        Elapsed = 0f;
-
-        // Definition is read live each loop, so Inspector edits affect active effects too.
-        while (Elapsed < Definition.Duration)
+        // A while loop, not an if: a long frame (lag spike) can cover several intervals.
+        while (tickTimer >= Definition.TickInterval - Epsilon)
         {
-            // Last tick may be shorter if duration isn't a multiple of the interval.
-            float step = Mathf.Min(Definition.TickInterval, Definition.Duration - Elapsed);
-            yield return new WaitForSeconds(step);
-
-            Elapsed += step;
-            OnTick(target, step);
+            tickTimer -= Definition.TickInterval;
+            OnTick(Target, Definition.TickInterval);
         }
 
-        IsFinished = true;
-        routine = null;
+        if (Elapsed >= Definition.Duration - Epsilon)
+        {
+            tickTimer = 0f;
+            IsFinished = true;
+        }
     }
 }
 

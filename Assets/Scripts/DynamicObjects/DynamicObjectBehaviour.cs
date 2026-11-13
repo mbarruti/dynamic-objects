@@ -48,6 +48,9 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         {
             IEffect effect = currentEffects[i];
 
+            if (effect is TimedEffect timed)
+                timed.Tick(Time.deltaTime);
+
             if (effect.IsFinished)
             {
                 effect.Remove(this);
@@ -59,7 +62,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     public virtual void OnHit(HitInfo hitInfo)
     {
         TakeDamage(hitInfo.Damage);
-        AddEffects(hitInfo.Effects);
+        AddEffects(hitInfo.EffectDefs);
     }
 
     public virtual void TakeDamage(float damage)
@@ -75,37 +78,48 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
             Destroy(gameObject);
     }
 
-    public virtual void AddEffects(List<IEffect> effects)
+    public virtual void AddEffects(List<EffectDefinition> defs)
     {
-        if (effects == null) return;
-        foreach (IEffect effect in effects)
-            AddEffect(effect);
+        if (defs == null) return;
+        foreach (EffectDefinition def in defs)
+            AddEffect(def);
     }
 
-    public void AddEffect(IEffect effect)
+    public void AddEffect(EffectDefinition def)
     {
-        if (effect == null || (CurrentHP <= 0 && IsDamageable))
+        if (def == null)
             return;
 
-        if (TryRefresh(effect))
+        if (!def.CanStack && TryRefresh(def))
             return;
 
-        currentEffects.Add(effect);
-        effect.Apply(this);
+        AddInstance(def.CreateInstance());
     }
+
+    private void AddInstance(IEffect effect)
+{
+    if (effect == null || (CurrentHP <= 0 && IsDamageable))
+        return;
+
+    currentEffects.Add(effect);
+    effect.Apply(this);
+}
 
     // Non-stacking timed effect already active: restart it instead of adding a second one.
     // Returns false when the effect should be added as a new instance.
-    private bool TryRefresh(IEffect effect)
+    private bool TryRefresh(EffectDefinition def)
     {
-        if (effect is not TimedEffect incoming || incoming.CanStack)
+        if (def == null)
+            return false;
+            
+        IEffect existing = currentEffects.Find(e => e.GetDefinition().GetType() == def.GetType());
+        if (existing == null)
             return false;
 
-        if (currentEffects.Find(e => e.GetType() == effect.GetType()) is not TimedEffect existing)
-            return false;
+        if (existing is TimedEffect timed)
+            timed.Refresh(this, def as TimedEffectDefinition);
 
-        existing.Refresh(this, incoming.GetDefinition() as TimedEffectDefinition);
-        return true;
+        return true;   // non-timed and non-stackable: already active, nothing to do
     }
 
     public void ReceivePulse(ElementPulse pulse)
@@ -116,6 +130,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
                 if (TryGetEffect(out BurnEffect burning))
                 {
                     burning.Budget = FireBudget.Join(burning.Budget, pulse.Budget);
+                    TryRefresh(pulse.EffectDef);
                     return;
                 }
 
@@ -126,7 +141,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
                 if (effect is BurnEffect burn)
                     burn.Budget = pulse.Budget?.Root;
 
-                AddEffect(effect);
+                AddInstance(effect);
                 break;
         }
     }
