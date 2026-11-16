@@ -119,9 +119,37 @@ public class ElementGrid
         };
     }
 
-    private bool IsCovered(Vector3 position)
+    private bool IsCovered(Vector3 groundPoint)
     {
+        float half = settings.cellSize * 0.25f;
+        Vector3 boxCentre = groundPoint + Vector3.up * 0.3f;
+        Vector3 halfExtents = new(half, 0.25f, half);
+
+        int count = Physics.OverlapBoxNonAlloc(boxCentre, halfExtents, overlapHits, Quaternion.identity,
+                                               settings.blockerMask, QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < count; i++)
+        {
+            if (IsBlocker(overlapHits[i]))
+                return true;
+        }
+
         return false;
+    }
+
+    private bool IsBlocker(Collider col)
+    {
+        if (owner.Owns(col))
+            return false;                                               // The ground itself.
+
+        if (col.GetComponentInParent<CharacterController>() != null)
+            return false;                                               // Player/NPCs move around.
+
+        DynamicObjectBehaviour obj = col.GetComponentInParent<DynamicObjectBehaviour>();
+        if (obj != null)
+            return !obj.Data.Flammable;                                 // Rock/metal block; wood burns on its own.
+
+        return true;                                                    // Static scenery (walls, buildings).
     }
 
     // State changes
