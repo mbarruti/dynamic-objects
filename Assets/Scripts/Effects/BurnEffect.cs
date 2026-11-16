@@ -14,15 +14,15 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
 
     protected override void OnTick(DynamicObjectBehaviour target, float deltaTime)
     {
-        Budget.Add(Def.PulseData.spreadPoints);
+        Budget.Add(target.PulseData.spreadPoints);
+        Debug.Log($"Spread points added from burn: {target.PulseData.spreadPoints}");
 
-        // TO-DO: make burn pulse radius & amount depend on the object it's burning
         ElementPulses.Emit(new ElementPulse
         {
             Type = Def.Element,
-            Position = target.transform.position,
-            Radius = Def.PulseData.radius,
-            Amount = Def.PulseData.amount,
+            Position = target.ObjectOrigin,
+            Radius = target.PulseData.radius,
+            Amount = target.PulseData.amount,
             Budget = Budget,
             EffectDef = Def,
             Source = target,

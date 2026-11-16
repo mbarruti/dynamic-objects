@@ -864,7 +864,7 @@ MonoBehaviour:
       pulseData:
         radius: 1
         amount: 5
-        spreadPoints: 0
+        spreadPoints: 4
     probeUp: 2
     probeDown: 4
     blockerMask:
@@ -1332,6 +1332,10 @@ PrefabInstance:
       value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.burn.pulseData.amount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.fireElement.burn.pulseData.radius
       value: 0.5
       objectReference: {fileID: 0}
@@ -1346,6 +1350,10 @@ PrefabInstance:
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.fireElement.burn.pulseData.spreadPoints
       value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterFireElement.burn.pulseData.amount
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.lighterFireElement.burn.pulseData.radius

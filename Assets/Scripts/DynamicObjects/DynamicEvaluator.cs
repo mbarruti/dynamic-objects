@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEngine;
 
 public static class DynamicEvaluator
 {
@@ -70,8 +71,11 @@ public static class DynamicEvaluator
 
             if (target.TryGetEffect(out BurnEffect burning))
             {
+                if (pulse.StartsFire)
+                    Debug.Log($"[{target.name}] tool pulse joined its burn, fire now has {burning.Budget.SpreadPoints:0.#} pts");
+
                 burning.Budget = FireBudget.Join(burning.Budget, pulse.Budget);
-                burning.Budget.Add(pulse.SpreadPoints);
+                // burning.Budget.Add(pulse.SpreadPoints);
             }
         }
     }

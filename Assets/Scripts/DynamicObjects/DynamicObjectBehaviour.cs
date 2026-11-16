@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver
+public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver, IElementEmitter
 {
     [SerializeField] private ElementMeterSettings meterSettings = new();
+    private PulseSettings pulseData;
 
+    private Collider mainCollider;
     private List<IEffect> currentEffects = new();
     private ElementMeter meter;
 
@@ -18,6 +20,8 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     public DynamicObject Data { get; private set; }
     public float CurrentHP { get; protected set; }
 
+    public PulseSettings PulseData => pulseData;
+
     protected virtual void Awake()
     {
         Initialize();
@@ -25,8 +29,15 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     private void Initialize()
     {
+        mainCollider = GetComponentInChildren<Collider>();
         CurrentHP = HitPoints;
         meter = new ElementMeter(meterSettings);
+        pulseData = new()
+        {
+            radius = mainCollider != null ? mainCollider.bounds.extents.magnitude : 0.5f,
+            amount = 5f,
+            spreadPoints = 4f
+        };
 
         Data = new DynamicObject(
             gameObject.name,
@@ -66,6 +77,10 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         if (!HasEffect<BurnEffect>())
             meter.RecoveryTick(dt, meterSettings);
     }
+
+    // Centre of the object's bounds.
+    public Vector3 ObjectOrigin =>
+        mainCollider != null ? mainCollider.bounds.center : transform.position;
 
     public virtual void OnHit(HitInfo hitInfo)
     {

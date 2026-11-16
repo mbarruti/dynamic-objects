@@ -55,16 +55,23 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
         ElementGrid g = GetOrCreateGrid();
         g.GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
 
-        FireBudget budget = FireBudget.Join(FindFireInHitCells(), pulse.Budget);
-        bool spreadStart = budget == null;
+        // FireBudget budget = FireBudget.Join(FindFireInHitCells(), pulse.Budget);
+        FireBudget cellsFire = FindFireInHitCells();
+        FireBudget budget = FireBudget.Join(cellsFire, pulse.Budget);
 
-        if (spreadStart)
-            budget = new();
+        if (pulse.StartsFire)
+            Debug.Log($"[{name}] tool pulse: " +
+                    (cellsFire != null ? "burning cell in area, merged into it" : "no fire here"));
+
+        // bool spreadStart = budget == null;
+
+        // if (spreadStart)
+        //     budget = new();
         
-        budget.Add(pulse.SpreadPoints);
+        // budget.Add(pulse.SpreadPoints);
 
         foreach (ElementCell cell in hitCells)
-            CellEvaluation.React(g, cell, pulse, budget, spreadStart);
+            CellEvaluation.React(g, cell, pulse, budget, pulse.StartsFire);
     }
 
     private FireBudget FindFireInHitCells()
