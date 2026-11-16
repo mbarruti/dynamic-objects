@@ -78,9 +78,14 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
             meter.RecoveryTick(dt, meterSettings);
     }
 
+    // Bounding volume of the object
+    public Bounds ObjectBounds =>
+        mainCollider != null ? mainCollider.bounds : new Bounds(transform.position, Vector3.zero);
+
     // Centre of the object's bounds.
     public Vector3 ObjectOrigin =>
         mainCollider != null ? mainCollider.bounds.center : transform.position;
+
 
     public virtual void OnHit(HitInfo hitInfo)
     {

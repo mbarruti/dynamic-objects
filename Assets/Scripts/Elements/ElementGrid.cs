@@ -8,14 +8,14 @@ public class ElementGrid
 {
     private readonly ElementSurface owner;
     private readonly SurfaceSettings settings;
+    private readonly System.Random random;
     private readonly Dictionary<Vector2Int, ElementCell> cells = new();
     private readonly RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] overlapHits = new Collider[16];
     private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> scratch = new();
     private readonly List<ElementCell> recoveringCells = new();
-    // TO-DO: make neighbor search with more variability,
-    // not the same order everytime or implement wind effect
+    // TO-DO: implement wind effect for fire spread
     private static readonly Vector2Int[] EdgeNeighbors =
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
@@ -27,10 +27,11 @@ public class ElementGrid
 
     public Dictionary<Vector2Int, ElementCell>.ValueCollection Cells => cells.Values;
 
-    public ElementGrid(ElementSurface owner, SurfaceSettings settings)
+    public ElementGrid(ElementSurface owner, SurfaceSettings settings, System.Random random)
     {
         this.owner = owner;
         this.settings = settings;
+        this.random = random;
     }
 
     // Coordinates
@@ -41,6 +42,11 @@ public class ElementGrid
 
     public Vector3 CellCentre(Vector2Int coord, float y) =>
         new((coord.x + 0.5f) * settings.cellSize, y, (coord.y + 0.5f) * settings.cellSize);
+
+    public bool TryGetCell(Vector2Int coord, out ElementCell cell) =>
+        cells.TryGetValue(coord, out cell);
+
+    private bool Roll(float chance) => chance > 0f && random.NextDouble() < chance;
 
     // Build grid
 
@@ -133,6 +139,10 @@ public class ElementGrid
 
         cell.State = CellState.Burning;
         cell.Budget = budget.Root;
+
+        if (Roll(settings.fuelChance))
+            cell.Budget.Add(settings.fuelPoints);
+
         burningCells.Add(cell);
         return true;
     }
@@ -160,8 +170,11 @@ public class ElementGrid
         {
             ElementCell cell = burningCells[i];
 
-            foreach(Vector2Int offset in EdgeNeighbors)
+            int start = random.Next(EdgeNeighbors.Length);
+            for (int k = 0; k < EdgeNeighbors.Length; k++)
             {
+                Vector2Int offset = EdgeNeighbors[(start + k) % EdgeNeighbors.Length];
+
                 ElementCell neighbor = GetOrCreateCell(cell.Coord + offset, cell.Position.y);
                 if (neighbor != null)
                     CellEvaluation.ApplyIgnite(this, neighbor, settings.igniteDamagePerSecond * dt, cell.Budget);

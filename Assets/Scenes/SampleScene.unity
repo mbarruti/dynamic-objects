@@ -754,7 +754,7 @@ GameObject:
   - component: {fileID: 1606702230}
   - component: {fileID: 1606702231}
   m_Layer: 0
-  m_Name: Floor
+  m_Name: GrassSurface
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -865,6 +865,8 @@ MonoBehaviour:
         radius: 1
         amount: 5
         spreadPoints: 4
+    fuelChance: 0.3
+    fuelPoints: 8
     probeUp: 2
     probeDown: 4
     blockerMask:
@@ -1313,7 +1315,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.spreadPoints
-      value: 300
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.lighterInterval

@@ -8,7 +8,7 @@ public class SurfaceSettings
     [Min(1)] public int maxCells = 4096;
     [Min(0.01f)] public float tickInterval = 0.1f;
 
-    [Header("Element")]
+    [Header("Fire")]
     [Tooltip("Lifetime of a burning cell until burn out.")]
     [Min(0.01f)] public float burnLifetime = 5f;
     [Tooltip("Damage per second a burning cell deals to each neighbor cell to ignite it.")]
@@ -25,6 +25,15 @@ public class SurfaceSettings
     [Min(0f)] public float pulseRadius = 1f;
     [Tooltip("Burn given to flammable objects that hear a burning cell.")]
     public BurnEffectDefinition objectEffect = new();
+
+    [Header("Fire Fuel")]
+    [Tooltip("Chance that a cell adds spread points to the fire when it ignites.")]
+    [Range(0f, 1f)] public float fuelChance = 0f;
+    [Tooltip("Spread points added when the fuel roll succeeds.")]
+    [Min(0f)] public float fuelPoints = 0f;
+    [Tooltip("Fixed seed so the same actions produce the same fire.")]
+    [SerializeField] public bool useSeed = false;
+    [SerializeField] public int seed = 0;
 
     [Header("Projection")]
     [Tooltip("How far above the reference height the ray starts.")]

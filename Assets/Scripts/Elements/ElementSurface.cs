@@ -19,6 +19,8 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
     private float tickTimer;
     private float pulseTimer;
 
+    public ElementGrid Grid => grid;
+
     private void Update()
     {
         if (grid == null)
@@ -44,7 +46,9 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
 
     private ElementGrid GetOrCreateGrid()
     {
-        grid ??= new ElementGrid(this, settings);
+        grid ??= new ElementGrid(this, settings,
+                                settings.useSeed ? new System.Random(settings.seed)
+                                : new System.Random());
         return grid;
     }
 
@@ -105,6 +109,8 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
             });
         }
     }
+
+    // Dev
 
     private void OnDrawGizmos()
     {
