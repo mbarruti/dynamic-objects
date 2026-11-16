@@ -5,18 +5,17 @@ using UnityEngine;
 public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver
 {
     [SerializeField] private ElementMeterSettings meterSettings = new();
-    private ElementMeter meter;
-    private List<IEffect> currentEffects = new();
 
-    public DynamicObject Data { get; private set; }
+    private List<IEffect> currentEffects = new();
+    private ElementMeter meter;
 
     protected virtual bool IsDamageable { get; } = false;
     protected virtual float HitPoints { get; } = 10f;
-
     protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
     protected virtual bool Flammable { get; } = false;
     protected virtual bool Conductor { get; } = false;
 
+    public DynamicObject Data { get; private set; }
     public float CurrentHP { get; protected set; }
 
     protected virtual void Awake()
@@ -26,6 +25,9 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     private void Initialize()
     {
+        CurrentHP = HitPoints;
+        meter = new ElementMeter(meterSettings);
+
         Data = new DynamicObject(
             gameObject.name,
             IsDamageable,
@@ -34,9 +36,6 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
             Flammable,
             Conductor
         );
-
-        CurrentHP = HitPoints;
-        meter = new ElementMeter(meterSettings);
     }
 
     public virtual void Apply()
@@ -46,6 +45,8 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     protected virtual void Update()
     {
+        float dt = Time.deltaTime;
+        
         // Iterate backwards so finished effects can be removed in place.
         for (int i = currentEffects.Count - 1; i >= 0; i--)
         {
@@ -60,6 +61,10 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
                 currentEffects.RemoveAt(i);
             }
         }
+
+        // TO-DO: generalize for any continuous element effect
+        if (!HasEffect<BurnEffect>())
+            meter.RecoveryTick(dt, meterSettings);
     }
 
     public virtual void OnHit(HitInfo hitInfo)
@@ -85,10 +90,10 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     {
         if (defs == null) return;
         foreach (EffectDefinition def in defs)
-            AddEffect(def);
+            AddOrRefreshEffect(def);
     }
 
-    public void AddEffect(EffectDefinition def)
+    public void AddOrRefreshEffect(EffectDefinition def)
     {
         if (def == null)
             return;
@@ -96,10 +101,10 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         if (!def.CanStack && TryRefresh(def))
             return;
 
-        AddInstance(def.CreateInstance());
+        AddEffectInstance(def.CreateInstance());
     }
 
-    private void AddInstance(IEffect effect)
+    private void AddEffectInstance(IEffect effect)
 {
     if (effect == null || (CurrentHP <= 0 && IsDamageable))
         return;
@@ -125,29 +130,13 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         return true;   // non-timed and non-stackable: already active, nothing to do
     }
 
-    public void ReceivePulse(ElementPulse pulse)
-    {
-        switch (pulse.Type)
-        {
-            case ElementType.Fire:
-                if (TryGetEffect(out BurnEffect burning))
-                {
-                    burning.Budget = FireBudget.Join(burning.Budget, pulse.Budget);
-                    TryRefresh(pulse.EffectDef);
-                    return;
-                }
+    // Elements
 
-                if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(Data))
-                    return;
+    public void ReceivePulse(ElementPulse pulse) => DynamicEvaluator.React(this, pulse);
 
-                IEffect effect = pulse.EffectDef.CreateInstance();
-                if (effect is BurnEffect burn)
-                    burn.Budget = pulse.Budget?.Root;
+    public bool DamageMeter(float dmg) => meter.Damage(dmg, meterSettings);
 
-                AddInstance(effect);
-                break;
-        }
-    }
+    // Misc
 
     public bool HasEffect<T>() where T : IEffect =>
         currentEffects.Exists(e => e is T && !e.IsFinished);

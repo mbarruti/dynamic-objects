@@ -9,11 +9,17 @@ public class Interact : MonoBehaviour
 
     private void Update()
     {
-        if (Mouse.current != null && Mouse.current.rightButton.wasPressedThisFrame)
-        {
-            TryInteractRight();
-        }
-        else if (Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame)
+        Mouse mouse = Mouse.current;
+
+        if (mouse == null)
+            return;
+
+        if (mouse.rightButton.isPressed)
+            TryLighter();
+        // else
+        //     attack.ReleaseLighter();
+
+        if (mouse.leftButton.wasPressedThisFrame)
         {
             TryInteractLeft();
         }
@@ -32,8 +38,20 @@ public class Interact : MonoBehaviour
 
             if (interactable is DynamicObjectBehaviour dynamicObject)
             {
-                attack.ApplyHit(dynamicObject);
+                attack.ApplyHit(dynamicObject, hit.point);
             }
+        }
+    }
+
+    private void TryLighter()
+    {
+        Ray ray = mainCamera.ScreenPointToRay(
+            Mouse.current.position.ReadValue()
+        );
+
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+        {
+                attack.HoldLighter(hit.point, Time.deltaTime);
         }
     }
 

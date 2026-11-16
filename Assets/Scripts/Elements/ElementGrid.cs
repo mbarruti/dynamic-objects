@@ -120,12 +120,15 @@ public class ElementGrid
 
     // State changes
 
-    public bool TryBurn(ElementCell cell, FireBudget budget)
+    public bool TryBurn(ElementCell cell, FireBudget budget, bool free)
     {
         if (cell.State != CellState.Normal || cell.Meter.Value > 0f)
             return false;
         
-        if (budget == null || !budget.TrySpend(settings.spreadCost))
+        if (budget == null)
+            return false;
+
+        if (!free && !budget.TrySpend(settings.spreadCost))
             return false;
 
         cell.State = CellState.Burning;

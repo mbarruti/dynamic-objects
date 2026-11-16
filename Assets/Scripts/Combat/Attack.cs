@@ -13,13 +13,19 @@ public class Attack
     [SerializeField] private float areaAmount = 100f;
     [SerializeField] private float spreadPoints = 300f;
 
+    [Header("Lighter")]
+    [SerializeField, Min(0.01f)] private float lighterInterval = 0.5f;
+    [SerializeField] private FireProperty lighterFireElement;
+    private float lighterTimer;
+
     [Header("Element")]
     [SerializeField] private FireProperty fireElement = new();
     [SerializeField] private IElementProperty element;
 
     private Hit hit;
 
-    public void ApplyHit(DynamicObjectBehaviour target)
+    // Like a fire projectile
+    public void ApplyHit(DynamicObjectBehaviour target, Vector3 point)
     {
         AddElement(fireElement);
 
@@ -38,17 +44,40 @@ public class Attack
         target.OnHit(hitInfo);
     }
 
+    // Lighter
+    public void HoldLighter(Vector3 point, float deltaTime)
+    {
+        lighterTimer += deltaTime;
+        if (lighterTimer < lighterInterval)
+            return;
+
+        lighterTimer -= lighterInterval;
+        ApplyLighter(point);
+    }
+
+    // Next press fires immediately instead of waiting one interval.
+    // public void ReleaseLighter() => lighterTimer = lighterInterval;
+
+    public void ApplyLighter(Vector3 point)
+    {
+        AddElement(lighterFireElement);
+
+        ElementPulses.Emit(new ElementPulse
+        {
+            Type = element.Type,
+            Position = point,
+            Radius = element.PulseData.radius,
+            Amount = element.PulseData.amount,
+            SpreadPoints = element.PulseData.spreadPoints,
+            EffectDef = element.Def,
+            Source = this
+        });
+    }
+
+    // Molotov or fire explosive
     public void ApplyToArea(Vector3 point)
     {
-        if (element == null)
-            AddElement(fireElement);
-
-        FireBudget budget = null;
-        if (element.Type == ElementType.Fire)
-        {
-            budget = new FireBudget();
-            budget.Add(spreadPoints);
-        }
+        AddElement(fireElement);
 
         ElementPulses.Emit(new ElementPulse
         {
@@ -56,7 +85,7 @@ public class Attack
             Position = point,
             Radius = areaRadius,
             Amount = areaAmount,
-            Budget = budget,
+            SpreadPoints = spreadPoints,
             EffectDef = element.Def,
             Source = this,
         });

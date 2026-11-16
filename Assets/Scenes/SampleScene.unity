@@ -848,12 +848,13 @@ MonoBehaviour:
     cellSize: 1
     maxCells: 4096
     tickInterval: 0.1
-    cellHitPoints: 10
     burnLifetime: 5
     igniteDamagePerSecond: 3
     spreadCost: 8
-    recoverDelay: 1
-    regenPerSecond: 5
+    meterSettings:
+      value: 10
+      recoverDelay: 1
+      regenPerSecond: 5
     pulseInterval: 0.5
     pulseRadius: 1
     objectEffect:
@@ -1315,7 +1316,47 @@ PrefabInstance:
       value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterInterval
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterBudget.spreadPoints
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.pulseData.amount
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.pulseData.radius
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.burn.pulseData.radius
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.fireElement.pulseData.spreadPoints
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterFireElement.pulseData.amount
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
       propertyPath: attack.fireElement.burn.pulseData.spreadPoints
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterFireElement.burn.pulseData.radius
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterFireElement.pulseData.spreadPoints
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4964783035737259357, guid: 85c82922e626ca9498889c3324b8c097, type: 3}
+      propertyPath: attack.lighterFireElement.burn.pulseData.spreadPoints
       value: 4
       objectReference: {fileID: 0}
     m_RemovedComponents: []

@@ -46,4 +46,33 @@ public static class DynamicEvaluator
         }
         return result;
     }
+
+    // Meter
+
+    public static void React(DynamicObjectBehaviour target, ElementPulse pulse)
+    {
+        switch (pulse.Type)
+        {
+            case ElementType.Fire:
+                ApplyIgnite(target, pulse);
+                break;
+        }
+    }
+
+    public static void ApplyIgnite(DynamicObjectBehaviour target, ElementPulse pulse)
+    {
+        if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(target.Data))
+            return;
+
+        if (target.DamageMeter(pulse.Amount))
+        {
+            target.AddOrRefreshEffect(pulse.EffectDef);
+
+            if (target.TryGetEffect(out BurnEffect burning))
+            {
+                burning.Budget = FireBudget.Join(burning.Budget, pulse.Budget);
+                burning.Budget.Add(pulse.SpreadPoints);
+            }
+        }
+    }
 }

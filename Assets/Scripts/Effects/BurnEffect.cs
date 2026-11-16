@@ -16,6 +16,7 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
     {
         Budget.Add(Def.PulseData.spreadPoints);
 
+        // TO-DO: make burn pulse radius & amount depend on the object it's burning
         ElementPulses.Emit(new ElementPulse
         {
             Type = Def.Element,

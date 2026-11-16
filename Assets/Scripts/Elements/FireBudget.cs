@@ -1,8 +1,10 @@
+using System;
 using UnityEngine;
 
+[Serializable]
 public class FireBudget
 {
-    private float spreadPoints;
+    [SerializeField] private float spreadPoints;
     private FireBudget mergedInto;
 
     public FireBudget(float points = 0f) => spreadPoints = Mathf.Max(0f, points);
