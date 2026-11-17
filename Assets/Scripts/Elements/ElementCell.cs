@@ -19,7 +19,9 @@ public class ElementCell
     public ElementMeter Meter;
     public float Lifetime;
     public bool IsRecovering = false;
-    public FireBudget Budget;
+    public float StoredPoints;
+    public int SearchStamp; // last gather search that visited this cell
+    public int LastFailedGather;   // tick in which this cell's fire last came up short
 
     public ElementCell(Vector2Int coord, Vector3 position, Vector3 normal, CellState state)
     {

@@ -54,59 +54,52 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
 
     // ---------------- Receiving ----------------
 
-    public void ReceivePulse(ElementPulse pulse)
+    public float ReceivePulse(ElementPulse pulse)
     {
         ElementGrid g = GetOrCreateGrid();
         g.GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
 
-        // FireBudget budget = FireBudget.Join(FindFireInHitCells(), pulse.Budget);
-        FireBudget cellsFire = FindFireInHitCells();
-        FireBudget budget = FireBudget.Join(cellsFire, pulse.Budget);
+        float points = pulse.SpreadPoints;
 
-        if (pulse.StartsFire)
-            Debug.Log($"[{name}] tool pulse: " +
-                    (cellsFire != null ? "burning cell in area, merged into it" : "no fire here"));
+        int burning = 0;
+        foreach (ElementCell cell in hitCells)
+            CellEvaluation.React(g, cell, pulse, ref points);
 
-        // bool spreadStart = budget == null;
-
-        // if (spreadStart)
-        //     budget = new();
+        foreach (ElementCell cell in hitCells)
+            if (cell.State == CellState.Burning) burning++;
         
-        // budget.Add(pulse.SpreadPoints);
+        if (burning == 0)
+            return pulse.SpreadPoints - points;
 
+        float share = points / burning;
         foreach (ElementCell cell in hitCells)
-            CellEvaluation.React(g, cell, pulse, budget, pulse.StartsFire);
-    }
-
-    private FireBudget FindFireInHitCells()
-    {   
-        FireBudget budget = null;
-        foreach (ElementCell cell in hitCells)
-        {
-            if (cell.Budget != null)
-                budget = FireBudget.Join(cell.Budget, budget);
-        }
-        return budget;
+            if (cell.State == CellState.Burning) cell.StoredPoints += share;
+        
+        return pulse.SpreadPoints;
     }
 
     // ---------------- Sending ----------------
 
     public void EmitPulses()
     {
-        IReadOnlyList<ElementCell> burningCells = grid.BurningCells;
+        // IReadOnlyList<ElementCell> burningCells = grid.BurningCells;
 
-        foreach (ElementCell cell in burningCells)
+        foreach (ElementCell cell in grid.BurningCells)
         {
-            ElementPulses.Emit(new ElementPulse
+            float offer = cell.StoredPoints * settings.pulseShare;
+
+            float used = ElementPulses.Emit(new ElementPulse
             {
                 Type = ElementType.Fire,
                 Position = cell.Position,
                 Radius = settings.pulseRadius,
                 Amount = pulseData.amount,
-                Budget = cell.Budget,
+                SpreadPoints = offer,
                 EffectDef = settings.objectEffect,
                 Source = this
             });
+
+            cell.StoredPoints -= used;
         }
     }
 

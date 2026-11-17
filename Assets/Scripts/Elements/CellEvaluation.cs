@@ -2,23 +2,24 @@ using UnityEngine;
 
 public static class CellEvaluation
 {
-    public static void React(ElementGrid grid, ElementCell cell, ElementPulse pulse, FireBudget budget, bool free)
+    public static void React(ElementGrid grid, ElementCell cell, ElementPulse pulse, ref float points)
     {
         switch (pulse.Type)
         {
             case ElementType.Fire:
-                ApplyIgnite(grid, cell, pulse.Amount, budget, free);
+                ApplyIgnite(grid, cell, pulse.Amount, ref points, pulse.StartsFire);
                 break;
         }
     }
 
-    public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, FireBudget budget, bool free = false)
+    public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, ref float points,
+                                    bool free = false, ElementCell source = null)
     {
         if (cell.State != CellState.Normal)
             return;
 
         if (cell.Meter.Damage(dmg, grid.Settings.meterSettings))
-            grid.TryBurn(cell, budget, free);
+            grid.TryBurn(cell, ref points, free, source);
         
         if (cell.State == CellState.Normal)
             grid.MarkDamaged(cell);

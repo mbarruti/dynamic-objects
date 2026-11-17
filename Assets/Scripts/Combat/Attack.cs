@@ -13,6 +13,7 @@ public class Attack
     [SerializeField] private float areaAmount = 100f;
     [SerializeField] private float spreadPoints = 300f;
 
+
     [Header("Lighter")]
     [SerializeField, Min(0.01f)] private float lighterInterval = 0.5f;
     [SerializeField] private FireProperty lighterFireElement;
@@ -21,6 +22,7 @@ public class Attack
     [Header("Element")]
     [SerializeField] private FireProperty fireElement = new();
     [SerializeField] private IElementProperty element;
+    [SerializeField] private bool startsFire = true;
 
     private Hit hit;
 
@@ -69,6 +71,7 @@ public class Attack
             Radius = element.PulseData.radius,
             Amount = element.PulseData.amount,
             SpreadPoints = element.PulseData.spreadPoints,
+            StartsFire = startsFire,
             EffectDef = element.Def,
             Source = this
         });
@@ -86,6 +89,7 @@ public class Attack
             Radius = areaRadius,
             Amount = areaAmount,
             SpreadPoints = spreadPoints,
+            StartsFire = startsFire,
             EffectDef = element.Def,
             Source = this,
         });

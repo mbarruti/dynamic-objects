@@ -152,7 +152,11 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     // Elements
 
-    public void ReceivePulse(ElementPulse pulse) => DynamicEvaluator.React(this, pulse);
+    public float ReceivePulse(ElementPulse pulse)
+    {
+        DynamicEvaluator.React(this, pulse);
+        return 0f;
+    }
 
     public bool DamageMeter(float dmg) => meter.Damage(dmg, meterSettings);
 

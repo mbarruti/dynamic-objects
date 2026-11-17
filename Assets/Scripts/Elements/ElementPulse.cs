@@ -9,7 +9,6 @@ public struct ElementPulse
     public float Radius;
     public float Amount;
     public float SpreadPoints;
-    public FireBudget Budget;
     public bool StartsFire;
     public EffectDefinition EffectDef;
     public object Source;
@@ -35,14 +34,8 @@ public static class ElementPulses
 
     // -----------------------
 
-    public static void Emit(ElementPulse pulse)
+    public static float Emit(ElementPulse pulse)
     {
-        if (pulse.Type == ElementType.Fire && pulse.Budget == null)
-        {
-            pulse.Budget = new FireBudget(pulse.SpreadPoints);
-            pulse.SpreadPoints = 0f;
-            pulse.StartsFire = true;
-        }
         float radius = Mathf.Max(0.05f, pulse.Radius);
         int count = Physics.OverlapSphereNonAlloc(pulse.Position, radius, hits,
                                                     Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -63,6 +56,9 @@ public static class ElementPulses
                 receivers.Add(receiver);
             }
 
+            if (receivers.Count > 1)
+            pulse.SpreadPoints /= receivers.Count;
+
             // Dev
             if (Record)
             {
@@ -75,9 +71,12 @@ public static class ElementPulses
                     Time = Time.time,
                 });
             }
-
+            // ---------
+            float used = 0f;
             foreach (IElementReceiver receiver in receivers)
-                receiver.ReceivePulse(pulse);
+                used += receiver.ReceivePulse(pulse);
+            
+            return used;
         }
     }
 }

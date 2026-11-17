@@ -2,20 +2,16 @@ using UnityEngine;
 
 public class BurnEffect : TimedEffect<BurnEffectDefinition>
 {
-    public FireBudget Budget { get; set; }
-
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
 
     protected override void OnApply(DynamicObjectBehaviour target)
     {
-        Budget ??= new FireBudget();
         Debug.Log($"{target.name} is burning for {Def.Duration}s");
     }
 
     protected override void OnTick(DynamicObjectBehaviour target, float deltaTime)
     {
-        Budget.Add(target.PulseData.spreadPoints);
-        Debug.Log($"Spread points added from burn: {target.PulseData.spreadPoints}");
+        // Debug.Log($"Spread points added from burn: {target.PulseData.spreadPoints}");
 
         ElementPulses.Emit(new ElementPulse
         {
@@ -23,7 +19,7 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
             Position = target.ObjectOrigin,
             Radius = target.PulseData.radius,
             Amount = target.PulseData.amount,
-            Budget = Budget,
+            SpreadPoints = target.PulseData.spreadPoints,
             EffectDef = Def,
             Source = target,
         });
