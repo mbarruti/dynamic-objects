@@ -41,7 +41,7 @@ public static class DynamicEvaluator
 
         foreach (EffectDefinition def in defs)
         {
-            if (def == null || !def.CanAffect(data)) continue;
+            if (def == null || !def.CanAffect(data.Traits)) continue;
             // TO-DO: resistance check here
             result.Add(def);
         }
@@ -62,7 +62,7 @@ public static class DynamicEvaluator
 
     public static void ApplyIgnite(DynamicObjectBehaviour target, ElementPulse pulse)
     {
-        if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(target.Data))
+        if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(target.Data.Traits))
             return;
 
         if (target.DamageMeter(pulse.Amount))

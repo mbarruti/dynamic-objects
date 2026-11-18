@@ -10,7 +10,7 @@ public interface IEffect
     // Called once when the effect is removed from a target.
     void Remove(DynamicObjectBehaviour target);
 
-    bool CanAffect(DynamicObject target);
+    bool CanAffect(ElementTraits traits);
 
     EffectDefinition GetDefinition();
 }

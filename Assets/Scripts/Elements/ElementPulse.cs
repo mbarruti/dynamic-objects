@@ -36,6 +36,8 @@ public static class ElementPulses
 
     public static float Emit(ElementPulse pulse)
     {
+        if (pulse.EffectDef == null) return 0f;
+        
         float radius = Mathf.Max(0.05f, pulse.Radius);
         int count = Physics.OverlapSphereNonAlloc(pulse.Position, radius, hits,
                                                     Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
@@ -51,6 +53,9 @@ public static class ElementPulses
                 IElementReceiver receiver = ResolveReceiver(hits[i]);
 
                 if (receiver == null || ReferenceEquals(receiver, pulse.Source) || receivers.Contains(receiver))
+                    continue;
+
+                if (!receiver.AcceptsEffect(pulse.EffectDef, hits[i]))
                     continue;
                 
                 receivers.Add(receiver);
@@ -72,6 +77,7 @@ public static class ElementPulses
                 });
             }
             // ---------
+            
             float used = 0f;
             foreach (IElementReceiver receiver in receivers)
                 used += receiver.ReceivePulse(pulse);

@@ -7,15 +7,15 @@ public static class CellEvaluation
         switch (pulse.Type)
         {
             case ElementType.Fire:
-                ApplyIgnite(grid, cell, pulse.Amount, ref points, pulse.StartsFire);
+                ApplyIgnite(grid, cell, pulse.Amount, pulse.EffectDef, ref points, pulse.StartsFire);
                 break;
         }
     }
 
-    public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, ref float points,
-                                    bool free = false, ElementCell source = null)
+    public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, EffectDefinition def,
+                                    ref float points, bool free = false, ElementCell source = null)
     {
-        if (cell.State != CellState.Normal || !cell.Settings.traits.flammable)
+        if (cell.State != CellState.Normal || !def.CanAffect(cell.Settings.traits))
             return;
 
         if (cell.Meter.Damage(dmg, cell.Settings.meterSettings))

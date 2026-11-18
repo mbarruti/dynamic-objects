@@ -1,6 +1,5 @@
 using UnityEngine;
 
-// Fire values of one kind of ground (grass, dirt, wood...). Each cell reads them from its own surface.
 [System.Serializable]
 public class SurfaceSettings
 {

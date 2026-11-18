@@ -6,7 +6,5 @@ public class BoxBehaviour : DynamicObjectBehaviour
 
     protected override ObjectMaterial Material => ObjectMaterial.Wood;
 
-    protected override bool Flammable => true;
-
-    protected override bool Conductor => false;
+    protected override ElementTraits Traits => new() { flammable = true };
 }

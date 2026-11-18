@@ -6,5 +6,5 @@ public class MetalBoxBehaviour : DynamicObjectBehaviour
 
     protected override ObjectMaterial Material => ObjectMaterial.Metal;
 
-    protected override bool Conductor => true;
+    protected override ElementTraits Traits => new() { conductor = true };
 }

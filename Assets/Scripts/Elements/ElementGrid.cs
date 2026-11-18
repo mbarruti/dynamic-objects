@@ -12,6 +12,7 @@ public class ElementGrid
     private readonly Dictionary<Vector2Int, ElementCell> cells = new();
     private readonly RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] overlapHits = new Collider[16];
+    private readonly List<ElementCell> spreadCells = new();
     private readonly List<ElementCell> burningCells = new();
     private readonly List<ElementCell> recoveringCells = new();
     private readonly List<ElementCell> scratch = new();
@@ -26,6 +27,8 @@ public class ElementGrid
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
     };
+
+    public float SpreadRadius => gridSettings.cellSize * 1.5f;
 
     public IReadOnlyList<ElementCell> BurningCells => burningCells;
 
@@ -163,7 +166,7 @@ public class ElementGrid
 
         DynamicObjectBehaviour obj = col.GetComponentInParent<DynamicObjectBehaviour>();
         if (obj != null)
-            return !obj.Data.Flammable;                                 // Rock/metal block; wood burns on its own.
+            return !obj.Data.Traits.flammable;                                 // Rock/metal block; wood burns on its own.
 
         return true;                                                    // Static scenery (walls, buildings).
     }
@@ -310,18 +313,21 @@ public class ElementGrid
 
             Debug.Assert(cell.StoredPoints >= -EPSILON, $"Negative points at {cell.Coord}: {cell.StoredPoints}");
 
+            BurnEffectDefinition burn = cell.Settings.objectEffect;
             // The burning cell's surface decides how hot it burns;
             // the neighbour's own meter decides when it ignites.
             float igniteDamage = cell.Settings.igniteDamagePerSecond * dt;
 
-            int start = random.Next(EdgeNeighbors.Length);
-            for (int k = 0; k < EdgeNeighbors.Length; k++)
+            GetCellsInRadius(cell.Position, SpreadRadius, spreadCells);
+            int n = spreadCells.Count;
+            int start = random.Next(n);
+            for (int k = 0; k < n; k++)
             {
-                Vector2Int offset = EdgeNeighbors[(start + k) % EdgeNeighbors.Length];
+                ElementCell neighbor = spreadCells[(start + k) % n];
 
-                ElementCell neighbor = GetOrCreateCell(cell.Coord + offset, cell.Position.y);
                 if (neighbor != null && Connected(cell, neighbor))
-                    CellEvaluation.ApplyIgnite(this, neighbor, igniteDamage, ref cell.StoredPoints, source: cell);
+                    CellEvaluation.ApplyIgnite(this, neighbor, igniteDamage, burn,
+                                                ref cell.StoredPoints, source: cell);
             }
 
             cell.Lifetime -= dt;

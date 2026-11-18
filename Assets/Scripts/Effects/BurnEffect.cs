@@ -21,9 +21,9 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
         {
             Type = Def.Element,
             Position = target.ObjectOrigin,
-            Radius = target.PulseData.radius,
-            Amount = target.PulseData.amount,
-            SpreadPoints = storedPoints + target.PulseData.spreadPoints,
+            Radius = target.ObjectBounds.extents.magnitude,
+            Amount = Def.PulseData.amount,
+            SpreadPoints = storedPoints + Def.PulseData.spreadPoints,
             EffectDef = Def,
             Source = target,
         });
@@ -39,5 +39,5 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
         Debug.Log($"{target.name} stopped burning");
     }
 
-    public override bool CanAffect(DynamicObject target) => Def.CanAffect(target);
+    public override bool CanAffect(ElementTraits traits) => Def.CanAffect(traits);
 }

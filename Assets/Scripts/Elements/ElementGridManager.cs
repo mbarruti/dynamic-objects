@@ -60,6 +60,13 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
 
     public float ReceivePulse(ElementPulse pulse) => grid.ApplyPulse(pulse);
 
+    public bool AcceptsEffect(EffectDefinition def, Collider hit)
+    {
+        ElementSurface surface = hit.GetComponentInParent<ElementSurface>();
+        return surface != null && def.CanAffect(surface.Settings.traits);
+    }
+
+
     // Burning cells only need to reach objects: every surface is already this grid.
     // Objects don't take points from fire, so these pulses carry none.
     private void EmitPulses()
@@ -75,8 +82,8 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
             {
                 Type = ElementType.Fire,
                 Position = cell.Position,
-                Radius = s.pulseRadius,
-                Amount = s.pulseAmount,
+                Radius = s.objectEffect.PulseData.radius,
+                Amount = s.objectEffect.PulseData.amount,
                 EffectDef = s.objectEffect,
                 Source = this,          // the grid never hears its own pulses
             });

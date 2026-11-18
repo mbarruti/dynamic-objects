@@ -23,7 +23,7 @@ public abstract class TimedEffect : IEffect
         Definition = definition;
     }
 
-    public virtual bool CanAffect(DynamicObject target) => true;
+    public virtual bool CanAffect(ElementTraits traits) => true;
 
     public EffectDefinition GetDefinition() => Definition;
 

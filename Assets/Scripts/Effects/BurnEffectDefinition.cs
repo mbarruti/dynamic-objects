@@ -11,5 +11,5 @@ public class BurnEffectDefinition : TimedEffectDefinition, IElementEmitter
 
     public override ElementType Element => ElementType.Fire;
     public override IEffect CreateInstance() => new BurnEffect(this);
-    public override bool CanAffect(DynamicObject target) => target.Flammable;
+    public override bool CanAffect(ElementTraits traits) => traits.flammable;
 }

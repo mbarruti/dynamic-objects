@@ -5,8 +5,8 @@ using UnityEngine;
 public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IElementReceiver, IElementEmitter
 {
     [SerializeField] private ElementMeterSettings meterSettings = new();
-    private PulseSettings pulseData;
 
+    private PulseSettings pulseData;
     private Collider mainCollider;
     private List<IEffect> currentEffects = new();
     private ElementMeter meter;
@@ -14,11 +14,11 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     protected virtual bool IsDamageable { get; } = false;
     protected virtual float HitPoints { get; } = 10f;
     protected virtual ObjectMaterial Material { get; } = ObjectMaterial.Default;
-    protected virtual bool Flammable { get; } = false;
-    protected virtual bool Conductor { get; } = false;
 
     public DynamicObject Data { get; private set; }
     public float CurrentHP { get; protected set; }
+
+    protected virtual ElementTraits Traits => default;
 
     public PulseSettings PulseData => pulseData;
 
@@ -44,8 +44,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
             IsDamageable,
             HitPoints,
             Material,
-            Flammable,
-            Conductor
+            Traits
         );
     }
 
@@ -162,6 +161,8 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         burn.AddPoints(pulse.SpreadPoints);
         return pulse.SpreadPoints;
     }
+
+    public bool AcceptsEffect(EffectDefinition def, Collider hit) => def.CanAffect(Data.Traits);
 
     public bool DamageMeter(float dmg) => meter.Damage(dmg, meterSettings);
 
