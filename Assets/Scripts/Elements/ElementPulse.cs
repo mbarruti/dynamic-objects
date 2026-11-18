@@ -48,7 +48,7 @@ public static class ElementPulses
         {
             for (int i = 0; i < count; i++)
             {
-                IElementReceiver receiver = hits[i].GetComponentInParent<IElementReceiver>();
+                IElementReceiver receiver = ResolveReceiver(hits[i]);
 
                 if (receiver == null || ReferenceEquals(receiver, pulse.Source) || receivers.Contains(receiver))
                     continue;
@@ -79,6 +79,17 @@ public static class ElementPulses
             return used;
         }
     }
+
+    // Every surface is part of the scene's one grid, so they all map to ElementWorld.
+    // A pulse touching two surfaces then reaches the grid once, and its points aren't split between them.
+    private static IElementReceiver ResolveReceiver(Collider col)
+    {
+        if (col.GetComponentInParent<ElementSurface>() != null)
+            return ElementGridManager.Instance;
+
+        return col.GetComponentInParent<IElementReceiver>();
+    }
+
 }
 
 [System.Serializable]

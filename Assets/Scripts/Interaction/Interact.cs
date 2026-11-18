@@ -16,8 +16,8 @@ public class Interact : MonoBehaviour
 
         if (mouse.rightButton.isPressed)
             TryLighter();
-        // else
-        //     attack.ReleaseLighter();
+        else
+            attack.ReleaseLighter();
 
         if (mouse.leftButton.wasPressedThisFrame)
         {

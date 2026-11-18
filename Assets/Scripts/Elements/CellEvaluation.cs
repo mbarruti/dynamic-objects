@@ -15,10 +15,10 @@ public static class CellEvaluation
     public static void ApplyIgnite(ElementGrid grid, ElementCell cell, float dmg, ref float points,
                                     bool free = false, ElementCell source = null)
     {
-        if (cell.State != CellState.Normal)
+        if (cell.State != CellState.Normal || !cell.Settings.traits.flammable)
             return;
 
-        if (cell.Meter.Damage(dmg, grid.Settings.meterSettings))
+        if (cell.Meter.Damage(dmg, cell.Settings.meterSettings))
             grid.TryBurn(cell, ref points, free, source);
         
         if (cell.State == CellState.Normal)

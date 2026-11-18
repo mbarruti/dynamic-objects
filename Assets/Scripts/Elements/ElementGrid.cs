@@ -1,65 +1,67 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
 using static Constants;
 
-// ElementGrid stores the cells of one surface, 
-// creates them by projecting them onto the world 
-// and runs the rules that change them over time, using that surface's settings.
+// The one grid shared by every ElementSurface in the scene.
+// Each cell is projected onto whichever surface is under it and reads its fire values from
+// that surface's settings. Grid-wide values come from GridSettings.
 public class ElementGrid
 {
-    private readonly ElementSurface owner;
-    private readonly SurfaceSettings settings;
+    private readonly GridSettings gridSettings;
     private readonly System.Random random;
     private readonly Dictionary<Vector2Int, ElementCell> cells = new();
     private readonly RaycastHit[] rayHits = new RaycastHit[16];
     private readonly Collider[] overlapHits = new Collider[16];
     private readonly List<ElementCell> burningCells = new();
+    private readonly List<ElementCell> recoveringCells = new();
     private readonly List<ElementCell> scratch = new();
     private readonly List<ElementCell> burningNeighbors = new();
-    private readonly List<ElementCell> recoveringCells = new();
+    private readonly List<ElementCell> hitCells = new();
+    private readonly Queue<ElementCell> searchQueue = new();
+    private int searchStamp;
+    private int tickCount;
+
     // TO-DO: implement wind effect for fire spread
     private static readonly Vector2Int[] EdgeNeighbors =
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
     };
-    private readonly Queue<ElementCell> searchQueue = new();
-    private int searchStamp;
-    private int tickCount;
-
-    public SurfaceSettings Settings => settings;
 
     public IReadOnlyList<ElementCell> BurningCells => burningCells;
 
     public Dictionary<Vector2Int, ElementCell>.ValueCollection Cells => cells.Values;
 
-    public ElementGrid(ElementSurface owner, SurfaceSettings settings, System.Random random)
+    public ElementGrid(GridSettings gridSettings, System.Random random)
     {
-        this.owner = owner;
-        this.settings = settings;
+        this.gridSettings = gridSettings;
         this.random = random;
     }
 
-    // Coordinates
+    // ---------------- Coordinates ----------------
 
-    public Vector2Int WorldToCell(Vector3 worldPos) =>
-        new(Mathf.FloorToInt(worldPos.x / settings.cellSize),
-            Mathf.FloorToInt(worldPos.z / settings.cellSize));
+    public Vector2Int gridSettingsToCell(Vector3 gridSettingsPos) =>
+        new(Mathf.FloorToInt(gridSettingsPos.x / gridSettings.cellSize),
+            Mathf.FloorToInt(gridSettingsPos.z / gridSettings.cellSize));
 
     public Vector3 CellCentre(Vector2Int coord, float y) =>
-        new((coord.x + 0.5f) * settings.cellSize, y, (coord.y + 0.5f) * settings.cellSize);
+        new((coord.x + 0.5f) * gridSettings.cellSize, y, (coord.y + 0.5f) * gridSettings.cellSize);
 
     public bool TryGetCell(Vector2Int coord, out ElementCell cell) =>
         cells.TryGetValue(coord, out cell);
 
-    // Build grid
+    // Neighbours only touch if the step between them is small enough:
+    // a wall top next to the ground isn't connected to it.
+    private bool Connected(ElementCell a, ElementCell b) =>
+        Mathf.Abs(a.Position.y - b.Position.y) <= gridSettings.maxStep;
+
+    // ---------------- Building the grid ----------------
 
     public ElementCell GetOrCreateCell(Vector2Int coord, float referenceY)
     {
         if (cells.TryGetValue(coord, out ElementCell existing))
             return existing;
 
-        if (cells.Count >= settings.maxCells)
+        if (cells.Count >= gridSettings.maxCells)
             return null;
 
         ElementCell cell = ProjectCell(coord, referenceY);
@@ -67,11 +69,14 @@ public class ElementGrid
         return cell;
     }
 
+    // Cells whose centre is within `radius` (flat) of `centre`, plus the closest one.
+    // Skips cells too far above or below for the pulse to reach.
     public void GetCellsInRadius(Vector3 centre, float radius, List<ElementCell> results)
     {
         results.Clear();
-        Vector2Int middle = WorldToCell(centre);
-        int range = Mathf.CeilToInt(radius / settings.cellSize);
+        Vector2Int middle = gridSettingsToCell(centre);
+        int range = Mathf.CeilToInt(radius / gridSettings.cellSize);
+        float reach = Mathf.Max(radius, gridSettings.maxStep);
 
         for (int x = -range; x <= range; x++)
         {
@@ -84,7 +89,7 @@ public class ElementGrid
                     continue;
 
                 ElementCell cell = GetOrCreateCell(coord, centre.y);
-                if (cell != null)
+                if (cell != null && Mathf.Abs(cell.Position.y - centre.y) <= reach)
                     results.Add(cell);
             }
         }
@@ -92,31 +97,38 @@ public class ElementGrid
 
     private ElementCell ProjectCell(Vector2Int coord, float referenceY)
     {
-        Vector3 center = CellCentre(coord, referenceY);
-        Vector3 origin = center + Vector3.up * settings.probeUp;
+        Vector3 centre = CellCentre(coord, referenceY);
+        Vector3 origin = centre + Vector3.up * gridSettings.probeUp;
 
         int count = Physics.RaycastNonAlloc(origin, Vector3.down, rayHits,
-                                            settings.probeUp + settings.probeDown,
+                                            gridSettings.probeUp + gridSettings.probeDown,
                                             Physics.DefaultRaycastLayers,
                                             QueryTriggerInteraction.Ignore);
-        
+
+        // Nearest hit that belongs to any surface.
         int nearest = -1;
+        ElementSurface surface = null;
         for (int i = 0; i < count; i++)
         {
-            if (!owner.Owns(rayHits[i].collider))
+            ElementSurface s = rayHits[i].collider.GetComponentInParent<ElementSurface>();
+            if (s == null)
                 continue;
-            
+
             if (nearest < 0 || rayHits[i].distance < rayHits[nearest].distance)
+            {
                 nearest = i;
+                surface = s;
+            }
         }
 
         if (nearest < 0)
-            return new ElementCell(coord, center, Vector3.up, CellState.Disabled);
+            return new ElementCell(coord, centre, Vector3.up, CellState.Disabled, null);
 
         RaycastHit hit = rayHits[nearest];
+        SurfaceSettings settings = surface.Settings;
         CellState state = IsCovered(hit.point) ? CellState.Disabled : CellState.Normal;
 
-        return new ElementCell(coord, hit.point, hit.normal, state)
+        return new ElementCell(coord, hit.point, hit.normal, state, settings)
         {
             Meter = new(settings.meterSettings),
             Lifetime = settings.burnLifetime,
@@ -125,12 +137,12 @@ public class ElementGrid
 
     private bool IsCovered(Vector3 point)
     {
-        float half = settings.cellSize * 0.25f;
+        float half = gridSettings.cellSize * 0.25f;
         Vector3 boxCentre = point + Vector3.up * 0.3f;
         Vector3 halfExtents = new(half, 0.25f, half);
 
         int count = Physics.OverlapBoxNonAlloc(boxCentre, halfExtents, overlapHits, Quaternion.identity,
-                                               settings.blockerMask, QueryTriggerInteraction.Ignore);
+                                               gridSettings.blockerMask, QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < count; i++)
         {
@@ -141,10 +153,10 @@ public class ElementGrid
         return false;
     }
 
-    private bool IsBlocker(Collider col)
+    private static bool IsBlocker(Collider col)
     {
-        if (owner.Owns(col))
-            return false;                                               // The ground itself.
+        if (col.GetComponentInParent<ElementSurface>() != null)
+            return false;                                               // Ground, any surface.
 
         if (col.GetComponentInParent<CharacterController>() != null)
             return false;                                               // Player/NPCs move around.
@@ -156,17 +168,73 @@ public class ElementGrid
         return true;                                                    // Static scenery (walls, buildings).
     }
 
-    // State changes
+    // ---------------- Receiving pulses ----------------
 
+    // Applies a pulse to the cells it covers. Returns the spread points it used.
+    public float ApplyPulse(ElementPulse pulse)
+    {
+        GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
+
+        int count = hitCells.Count;
+        if (count == 0)
+            return 0f;
+
+        float points = pulse.SpreadPoints;
+
+        // Random start so the same corner of the area doesn't always go first.
+        int first = random.Next(count);
+
+        // 1. Heat the cells. Ignitions use each cell's own points plus the pulse's (tools are free).
+        for (int i = 0; i < count; i++)
+            CellEvaluation.React(this, hitCells[(first + i) % count], pulse, ref points);
+
+        // 2. Top up cells that are heating, never past what they need to ignite.
+        for (int i = 0; i < count && points > 0f; i++)
+        {
+            ElementCell cell = hitCells[(first + i) % count];
+
+            if (cell.State != CellState.Normal || !cell.IsRecovering)
+                continue;
+
+            float give = Mathf.Min(points, cell.Settings.spreadCost - cell.StoredPoints);
+            if (give <= 0f)
+                continue;
+
+            cell.StoredPoints += give;
+            points -= give;
+        }
+
+        // 3. The rest feeds the burning cells it reached (equal shares, so order doesn't matter).
+        int burning = 0;
+        foreach (ElementCell cell in hitCells)
+            if (cell.State == CellState.Burning) burning++;
+
+        if (burning > 0 && points > 0f)
+        {
+            float share = points / burning;
+            foreach (ElementCell cell in hitCells)
+                if (cell.State == CellState.Burning) cell.StoredPoints += share;
+            points = 0f;
+        }
+
+        // Whatever is left wasn't used: the sender keeps it or loses it.
+        return pulse.SpreadPoints - points;
+    }
+
+    // ---------------- State changes ----------------
+
+    // The target cell's surface decides the cost and the fuel roll.
     public bool TryBurn(ElementCell cell, ref float points, bool free, ElementCell source = null)
     {
         if (cell.State != CellState.Normal || cell.Meter.Value > 0f)
             return false;
-        
+
+        SurfaceSettings s = cell.Settings;
+
         if (!free)
         {
-            float heatPoints = Mathf.Min(cell.StoredPoints, settings.spreadCost);
-            float missing = settings.spreadCost - heatPoints;
+            float heatPoints = Mathf.Min(cell.StoredPoints, s.spreadCost);
+            float missing = s.spreadCost - heatPoints;
 
             bool shortOfPoints = points < missing - EPSILON;
 
@@ -182,13 +250,13 @@ public class ElementGrid
                 return false;
 
             points = Mathf.Max(0f, points - missing);
-            cell.StoredPoints -= missing;
+            cell.StoredPoints -= heatPoints;
         }
 
         cell.State = CellState.Burning;
 
-        if (Roll(settings.fuelChance))
-            cell.StoredPoints += settings.fuelPoints;
+        if (Roll(s.fuelChance))
+            cell.StoredPoints += s.fuelPoints;
 
         burningCells.Add(cell);
         return true;
@@ -199,13 +267,12 @@ public class ElementGrid
         cell.State = CellState.Burnt;
         burningCells.Remove(cell);
 
-        // Leftover points go to burning neighbors
-        // TO-DO: maybe leftover points vanish if not used before burnout
+        // Leftover points go to burning neighbours.
         burningNeighbors.Clear();
-        foreach(Vector2Int offset in EdgeNeighbors)
+        foreach (Vector2Int offset in EdgeNeighbors)
         {
-            if (TryGetCell(cell.Coord + offset, out ElementCell n)
-                && n.State == CellState.Burning)
+            if (TryGetCell(cell.Coord + offset, out ElementCell n) &&
+                n.State == CellState.Burning && Connected(cell, n))
                 burningNeighbors.Add(n);
         }
 
@@ -215,11 +282,11 @@ public class ElementGrid
             foreach (ElementCell n in burningNeighbors)
                 n.StoredPoints += share;
         }
-        
-        cell.StoredPoints = 0;
+
+        cell.StoredPoints = 0f;
     }
 
-    // Simulation
+    // ---------------- Simulation ----------------
 
     public void Tick(float dt)
     {
@@ -232,9 +299,8 @@ public class ElementGrid
         tickCount++;
 
         int count = burningCells.Count;
-        if (count == 0) return;
-
-        float igniteDamage = settings.igniteDamagePerSecond * dt;
+        if (count == 0)
+            return;
 
         int first = random.Next(count);
 
@@ -242,13 +308,19 @@ public class ElementGrid
         {
             ElementCell cell = burningCells[(first + i) % count];
 
+            Debug.Assert(cell.StoredPoints >= -EPSILON, $"Negative points at {cell.Coord}: {cell.StoredPoints}");
+
+            // The burning cell's surface decides how hot it burns;
+            // the neighbour's own meter decides when it ignites.
+            float igniteDamage = cell.Settings.igniteDamagePerSecond * dt;
+
             int start = random.Next(EdgeNeighbors.Length);
             for (int k = 0; k < EdgeNeighbors.Length; k++)
             {
                 Vector2Int offset = EdgeNeighbors[(start + k) % EdgeNeighbors.Length];
 
                 ElementCell neighbor = GetOrCreateCell(cell.Coord + offset, cell.Position.y);
-                if (neighbor != null)
+                if (neighbor != null && Connected(cell, neighbor))
                     CellEvaluation.ApplyIgnite(this, neighbor, igniteDamage, ref cell.StoredPoints, source: cell);
             }
 
@@ -259,12 +331,12 @@ public class ElementGrid
 
         foreach (ElementCell cell in scratch)
             BurnOut(cell);
-        
+
         scratch.Clear();
     }
 
-    // Takes up to `needed` points from burning cells connected to `start`, nearest first.
-    // Never takes from `start` itself. Returns what it took.
+    // Takes up to `needed` points from burning cells connected to `startCell`, nearest first.
+    // Never takes from `startCell` itself. Returns what it took.
     private float GatherPoints(ElementCell startCell, float needed)
     {
         float gathered = 0f;
@@ -275,7 +347,7 @@ public class ElementGrid
         startCell.SearchStamp = searchStamp;
         searchQueue.Enqueue(startCell);
 
-        while (searchQueue.Count > 0 && gathered < needed && visitedCells < settings.maxSearchCells)
+        while (searchQueue.Count > 0 && gathered < needed && visitedCells < gridSettings.maxSearchCells)
         {
             ElementCell cell = searchQueue.Dequeue();
             visitedCells++;
@@ -291,9 +363,10 @@ public class ElementGrid
             for (int k = 0; k < EdgeNeighbors.Length; k++)
             {
                 Vector2Int offset = EdgeNeighbors[(start + k) % EdgeNeighbors.Length];
-                if (TryGetCell(cell.Coord + offset, out ElementCell c)
-                    && c.State == CellState.Burning
-                    && c.SearchStamp != searchStamp)
+                if (TryGetCell(cell.Coord + offset, out ElementCell c) &&
+                    c.State == CellState.Burning &&
+                    c.SearchStamp != searchStamp &&
+                    Connected(cell, c))
                 {
                     c.SearchStamp = searchStamp;
                     searchQueue.Enqueue(c);
@@ -303,11 +376,9 @@ public class ElementGrid
 
         return gathered;
     }
-    
+
     public void MarkDamaged(ElementCell cell)
     {
-        // cell.RecoverTimer = settings.recoverDelay;
-
         if (!cell.IsRecovering)
         {
             cell.IsRecovering = true;
@@ -317,23 +388,23 @@ public class ElementGrid
 
     private void UpdateRecovering(float dt)
     {
-        float max = settings.meterSettings.value;
-
         for (int i = recoveringCells.Count - 1; i >= 0; i--)
         {
             ElementCell cell = recoveringCells[i];
 
             if (cell.State == CellState.Normal)
             {
-                float heatBefore = max - cell.Meter.Value;
-                bool recovered = cell.Meter.RecoveryTick(dt, settings.meterSettings);
-                float heatAfter = max - cell.Meter.Value;
+                ElementMeterSettings meter = cell.Settings.meterSettings;
 
-                // Stored spread points are reduced relative to the meter
+                float heatBefore = meter.value - cell.Meter.Value;
+                bool recovered = cell.Meter.RecoveryTick(dt, meter);
+                float heatAfter = meter.value - cell.Meter.Value;
+
+                // Pre-paid points cool down with the meter.
                 cell.StoredPoints = heatBefore > 0f
                     ? cell.StoredPoints * (heatAfter / heatBefore)
                     : 0f;
-                
+
                 if (!recovered)
                     continue;
             }
@@ -343,13 +414,10 @@ public class ElementGrid
         }
     }
 
-    // Misc
+    // ---------------- Misc ----------------
 
     private static float FlatDistance(Vector3 a, Vector3 b) =>
         Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
 
     private bool Roll(float chance) => chance > 0f && random.NextDouble() < chance;
-
-    // Random index from this grid's seeded generator.
-    public int RandomIndex(int count) => random.Next(count);
 }

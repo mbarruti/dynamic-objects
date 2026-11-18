@@ -58,7 +58,7 @@ public class Attack
     }
 
     // Next press fires immediately instead of waiting one interval.
-    // public void ReleaseLighter() => lighterTimer = lighterInterval;
+    public void ReleaseLighter() => lighterTimer = lighterInterval;
 
     public void ApplyLighter(Vector3 point)
     {

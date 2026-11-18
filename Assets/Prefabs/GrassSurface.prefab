@@ -105,20 +105,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ElementSurface
   settings:
-    cellSize: 1
-    maxCells: 4096
-    tickInterval: 0.1
-    burnLifetime: 5
+    traits:
+      flammable: 1
+      conductor: 0
+    burnLifetime: 10
     igniteDamagePerSecond: 3
-    diffusion: 2
     spreadCost: 8
     meterSettings:
       value: 10
       recoverDelay: 1
       regenPerSecond: 5
-    pulseInterval: 0.5
     pulseRadius: 1
-    pulseShare: 0.25
+    pulseAmount: 3
     objectEffect:
       duration: 10
       tickInterval: 1
@@ -129,19 +127,6 @@ MonoBehaviour:
         spreadPoints: 4
     fuelChance: 0.3
     fuelPoints: 8
-    useSeed: 1
-    seed: 0
-    probeUp: 2
-    probeDown: 4
-    blockerMask:
-      serializedVersion: 2
-      m_Bits: 4294967295
-  pulseData:
-    radius: 1
-    amount: 3
-    spreadPoints: 0
-  drawGizmos: 1
-  drawLifetime: 0
 --- !u!65 &1306712670019673654
 BoxCollider:
   m_ObjectHideFlags: 0
