@@ -2,7 +2,11 @@ using UnityEngine;
 
 public class BurnEffect : TimedEffect<BurnEffectDefinition>
 {
+    private float storedPoints;
+
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
+
+    public void AddPoints(float points) => storedPoints += Mathf.Max(0f, points);
 
     protected override void OnApply(DynamicObjectBehaviour target)
     {
@@ -13,17 +17,21 @@ public class BurnEffect : TimedEffect<BurnEffectDefinition>
     {
         // Debug.Log($"Spread points added from burn: {target.PulseData.spreadPoints}");
 
-        ElementPulses.Emit(new ElementPulse
+        float used = ElementPulses.Emit(new ElementPulse
         {
             Type = Def.Element,
             Position = target.ObjectOrigin,
             Radius = target.PulseData.radius,
             Amount = target.PulseData.amount,
-            SpreadPoints = target.PulseData.spreadPoints,
+            SpreadPoints = storedPoints + target.PulseData.spreadPoints,
             EffectDef = Def,
             Source = target,
         });
         target.TakeDamage(Def.DamagePerSecond * deltaTime);
+
+        // Spend the stock first, so the box gets back to its own points per tick as soon as possible.
+        // Its own points that go unused are lost; the stock only ever shrinks.
+        storedPoints = Mathf.Max(0f, storedPoints - used);
     }
 
     protected override void OnRemove(DynamicObjectBehaviour target)

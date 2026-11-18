@@ -165,20 +165,24 @@ public class ElementGrid
         
         if (!free)
         {
-            bool shortOfPoints = points < settings.spreadCost - EPSILON;
+            float heatPoints = Mathf.Min(cell.StoredPoints, settings.spreadCost);
+            float missing = settings.spreadCost - heatPoints;
+
+            bool shortOfPoints = points < missing - EPSILON;
 
             if (shortOfPoints && source != null && source.LastFailedGather != tickCount)
             {
-                points += GatherPoints(source, settings.spreadCost - points);
+                points += GatherPoints(source, missing - points);
 
-                if (points < settings.spreadCost - EPSILON)
+                if (points < missing - EPSILON)
                     source.LastFailedGather = tickCount;
             }
 
-            if (points < settings.spreadCost - EPSILON)
+            if (points < missing - EPSILON)
                 return false;
 
-            points = Mathf.Max(0f, points - settings.spreadCost);
+            points = Mathf.Max(0f, points - missing);
+            cell.StoredPoints -= missing;
         }
 
         cell.State = CellState.Burning;
@@ -313,13 +317,25 @@ public class ElementGrid
 
     private void UpdateRecovering(float dt)
     {
+        float max = settings.meterSettings.value;
+
         for (int i = recoveringCells.Count - 1; i >= 0; i--)
         {
             ElementCell cell = recoveringCells[i];
 
-            if (cell.State == CellState.Normal && !cell.Meter.RecoveryTick(dt, settings.meterSettings))
+            if (cell.State == CellState.Normal)
             {
-                continue;
+                float heatBefore = max - cell.Meter.Value;
+                bool recovered = cell.Meter.RecoveryTick(dt, settings.meterSettings);
+                float heatAfter = max - cell.Meter.Value;
+
+                // Stored spread points are reduced relative to the meter
+                cell.StoredPoints = heatBefore > 0f
+                    ? cell.StoredPoints * (heatAfter / heatBefore)
+                    : 0f;
+                
+                if (!recovered)
+                    continue;
             }
 
             cell.IsRecovering = false;
@@ -327,18 +343,13 @@ public class ElementGrid
         }
     }
 
-    // public bool TrySpendPoints(ElementCell cell, float cost)
-    // {
-    //     if (cell.StoredPoints < cost)
-    //         return false;
-    //     cell.RemovePoints(cost);
-    //     return true;
-    // }
-
     // Misc
 
     private static float FlatDistance(Vector3 a, Vector3 b) =>
         Vector2.Distance(new Vector2(a.x, a.z), new Vector2(b.x, b.z));
 
     private bool Roll(float chance) => chance > 0f && random.NextDouble() < chance;
+
+    // Random index from this grid's seeded generator.
+    public int RandomIndex(int count) => random.Next(count);
 }

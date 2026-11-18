@@ -11,14 +11,13 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
     [SerializeField] private bool drawGizmos = true;
     [SerializeField] private bool drawLifetime = false;
 
-    public PulseSettings PulseData => pulseData;
-
     private ElementGrid grid;
     private readonly List<ElementCell> hitCells = new();
 
     private float tickTimer;
     private float pulseTimer;
 
+    public PulseSettings PulseData => pulseData;
     public ElementGrid Grid => grid;
 
     private void Update()
@@ -59,24 +58,52 @@ public class ElementSurface : MonoBehaviour, IElementReceiver, IElementEmitter
         ElementGrid g = GetOrCreateGrid();
         g.GetCellsInRadius(pulse.Position, pulse.Radius, hitCells);
 
+        int count = hitCells.Count;
+        if (count == 0)
+            return 0f;
+
         float points = pulse.SpreadPoints;
 
+        // Random start so the same corner of the area doesn't always go first.
+        int first = g.RandomIndex(count);
+
+        // 1. Heat the cells. Ignitions use each cell's own points plus the pulse's (tools are free).
+        for (int i = 0; i < count; i++)
+            CellEvaluation.React(g, hitCells[(first + i) % count], pulse, ref points);
+
+        // 2. Top up cells that are heating, never past what they need to ignite.
+        for (int i = 0; i < count && points > 0f; i++)
+        {
+            ElementCell cell = hitCells[(first + i) % count];
+
+            if (cell.State != CellState.Normal || !cell.IsRecovering)
+                continue;
+
+            float give = Mathf.Min(points, g.Settings.spreadCost - cell.StoredPoints);
+            if (give <= 0f)
+                continue;
+
+            cell.StoredPoints += give;
+            points -= give;
+        }
+
+        // 3. The rest feeds the burning cells it reached.
         int burning = 0;
         foreach (ElementCell cell in hitCells)
-            CellEvaluation.React(g, cell, pulse, ref points);
-
-        foreach (ElementCell cell in hitCells)
             if (cell.State == CellState.Burning) burning++;
-        
-        if (burning == 0)
-            return pulse.SpreadPoints - points;
 
-        float share = points / burning;
-        foreach (ElementCell cell in hitCells)
-            if (cell.State == CellState.Burning) cell.StoredPoints += share;
-        
-        return pulse.SpreadPoints;
+        if (burning > 0 && points > 0f)
+        {
+            float share = points / burning;
+            foreach (ElementCell cell in hitCells)
+                if (cell.State == CellState.Burning) cell.StoredPoints += share;
+            points = 0f;
+        }
+
+        // Whatever is left wasn't used: the sender keeps it (cell pulses) or loses it (box, tools).
+        return pulse.SpreadPoints - points;
     }
+
 
     // ---------------- Sending ----------------
 
