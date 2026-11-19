@@ -8,6 +8,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     private PulseSettings pulseData;
     private Collider mainCollider;
+    private Bounds reportedBounds;
     private List<IEffect> currentEffects = new();
     private ElementMeter meter;
 
@@ -25,6 +26,20 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     protected virtual void Awake()
     {
         Initialize();
+    }
+
+    protected virtual void OnEnable()
+    {
+        reportedBounds = ObjectBounds;
+        ElementGridManager mgr = ElementGridManager.Instance;
+        if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
+    }
+
+    protected virtual void OnDisable()
+    {
+        if (reportedBounds == null) return;
+        ElementGridManager mgr = ElementGridManager.Instance;
+        if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
     }
 
     private void Initialize()
@@ -48,14 +63,11 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         );
     }
 
-    public virtual void Apply()
-    {
-        Debug.Log($"Object material is {Data.Material}");
-    }
-
     protected virtual void Update()
     {
         float dt = Time.deltaTime;
+
+        ReportMovement();
         
         // Iterate backwards so finished effects can be removed in place.
         for (int i = currentEffects.Count - 1; i >= 0; i--)
@@ -85,6 +97,10 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     public Vector3 ObjectOrigin =>
         mainCollider != null ? mainCollider.bounds.center : transform.position;
 
+    public virtual void Apply()
+    {
+        Debug.Log($"Object material is {Data.Material}");
+    }
 
     public virtual void OnHit(HitInfo hitInfo)
     {
@@ -99,7 +115,7 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
             return;
 
         CurrentHP = Mathf.Max(0, CurrentHP - damage);
-        Debug.Log($"Current HP of the object: {CurrentHP}");
+        // Debug.Log($"Current HP of the object: {CurrentHP}");
 
         if (CurrentHP <= 0)
             Destroy(gameObject);
@@ -166,7 +182,37 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     public bool DamageMeter(float dmg) => meter.Damage(dmg, meterSettings);
 
+    // Physics
+
+    private void ReportMovement()
+    {
+        Bounds currentBounds = ObjectBounds;
+        if ((currentBounds.center - reportedBounds.center).sqrMagnitude < 0.01f &&
+            (currentBounds.size - reportedBounds.size).sqrMagnitude < 0.01f)
+            return;
+        
+        ElementGridManager mgr = ElementGridManager.Instance;
+        if (mgr != null)
+        {
+            mgr.Grid.MarkCoverage(reportedBounds);
+            mgr.Grid.MarkCoverage(currentBounds);
+            reportedBounds = currentBounds;
+        }
+    }
+
     // Misc
+
+#if UNITY_EDITOR
+    private void OnDrawGizmos()
+    {
+        ElementGridManager mgr = ElementGridManager.Instance;
+        if (mgr == null || !mgr.DrawSpreadPoints || !TryGetEffect(out BurnEffect burn))
+            return;
+
+        Vector3 top = ObjectBounds.center + Vector3.up * (ObjectBounds.extents.y + 0.2f);
+        UnityEditor.Handles.Label(top, burn.StoredPoints.ToString("0.0"));
+    }
+#endif
 
     public bool HasEffect<T>() where T : IEffect =>
         currentEffects.Exists(e => e is T && !e.IsFinished);

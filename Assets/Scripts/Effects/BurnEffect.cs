@@ -3,6 +3,8 @@ using UnityEngine;
 public class BurnEffect : TimedEffect<BurnEffectDefinition>
 {
     private float storedPoints;
+    
+    public float StoredPoints => storedPoints;
 
     public BurnEffect(BurnEffectDefinition def) : base(def) {}
 

@@ -5,7 +5,8 @@ public enum CellState
     Normal,
     Burning,
     Burnt,
-    Disabled    // No ground, or covered by a something.
+    Covered,
+    Disabled    // No ground.
 }
 
 // A single cell from the entity's surface

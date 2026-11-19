@@ -8,7 +8,8 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
 
     [Header("Dev")]
     [SerializeField] private bool drawGizmos = true;
-    [SerializeField] private bool drawLifetime = false;
+    [SerializeField] private bool drawSpreadPoints = false;
+    public bool DrawSpreadPoints => drawSpreadPoints;
 
     private ElementGrid grid;
     private float tickTimer;
@@ -121,8 +122,8 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
             }
 
 #if UNITY_EDITOR
-            if (drawLifetime && cell.State == CellState.Burning)
-                UnityEditor.Handles.Label(p + Vector3.up * 0.1f, cell.Lifetime.ToString("0.0"));
+            if (drawSpreadPoints && cell.StoredPoints > 0f)
+                UnityEditor.Handles.Label(p + Vector3.up * 0.1f, cell.StoredPoints.ToString("0.0"));
 #endif
         }
     }

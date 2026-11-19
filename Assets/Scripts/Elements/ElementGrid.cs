@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using UnityEngine;
 using static Constants;
 
@@ -19,6 +20,7 @@ public class ElementGrid
     private readonly List<ElementCell> burningNeighbors = new();
     private readonly List<ElementCell> hitCells = new();
     private readonly Queue<ElementCell> searchQueue = new();
+    private readonly List<Bounds> coveredAreas = new();
     private int searchStamp;
     private int tickCount;
 
@@ -42,7 +44,7 @@ public class ElementGrid
 
     // ---------------- Coordinates ----------------
 
-    public Vector2Int gridSettingsToCell(Vector3 gridSettingsPos) =>
+    public Vector2Int WorldToCell(Vector3 gridSettingsPos) =>
         new(Mathf.FloorToInt(gridSettingsPos.x / gridSettings.cellSize),
             Mathf.FloorToInt(gridSettingsPos.z / gridSettings.cellSize));
 
@@ -77,7 +79,7 @@ public class ElementGrid
     public void GetCellsInRadius(Vector3 centre, float radius, List<ElementCell> results)
     {
         results.Clear();
-        Vector2Int middle = gridSettingsToCell(centre);
+        Vector2Int middle = WorldToCell(centre);
         int range = Mathf.CeilToInt(radius / gridSettings.cellSize);
         float reach = Mathf.Max(radius, gridSettings.maxStep);
 
@@ -108,7 +110,7 @@ public class ElementGrid
                                             Physics.DefaultRaycastLayers,
                                             QueryTriggerInteraction.Ignore);
 
-        // Nearest hit that belongs to any surface.
+        // Nearest hit that belongs to any surface
         int nearest = -1;
         ElementSurface surface = null;
         for (int i = 0; i < count; i++)
@@ -129,7 +131,7 @@ public class ElementGrid
 
         RaycastHit hit = rayHits[nearest];
         SurfaceSettings settings = surface.Settings;
-        CellState state = IsCovered(hit.point) ? CellState.Disabled : CellState.Normal;
+        CellState state = IsCovered(hit.point) ? CellState.Covered : CellState.Normal;
 
         return new ElementCell(coord, hit.point, hit.normal, state, settings)
         {
@@ -289,12 +291,59 @@ public class ElementGrid
         cell.StoredPoints = 0f;
     }
 
+    private void SetCovered(ElementCell cell, bool covered)
+    {
+        switch (cell.State)
+        {
+            case CellState.Normal when covered:
+                cell.State = CellState.Covered;
+                cell.StoredPoints = 0f;                     // pre-payment lost under the rock
+                break;
+
+            case CellState.Burning when covered:
+                BurnOut(cell);                              // smothered: leftovers go to burning neighbours
+                break;
+
+            case CellState.Covered when !covered:
+                cell.State = CellState.Normal;
+                cell.Meter = new(cell.Settings.meterSettings);
+                cell.Lifetime = cell.Settings.burnLifetime;
+                break;
+        }
+    }
+
     // ---------------- Simulation ----------------
 
     public void Tick(float dt)
     {
+        UpdateCoverage();   
         UpdateBurning(dt);
         UpdateRecovering(dt);
+    }
+
+    private void UpdateCoverage()
+    {
+        if (coveredAreas.Count == 0 ) return;
+
+        // An object moved by its transform (not by physics) could be read at its old position
+        Physics.SyncTransforms();
+
+        foreach (Bounds b in coveredAreas)
+        {
+            Bounds area = b;
+            area.Expand(gridSettings.cellSize * 0.5f);
+
+            Vector2Int min = WorldToCell(b.min);
+            Vector2Int max = WorldToCell(b.max);
+
+            for (int x = min.x; x <= max.x; x++)
+            for (int z = min.y; z <= max.y; z++)
+            {
+                if (cells.TryGetValue(new(x, z), out ElementCell cell) && cell.Settings != null)
+                    SetCovered(cell, IsCovered(cell.Position));
+            }
+        }
+        coveredAreas.Clear();
     }
 
     private void UpdateBurning(float dt)
@@ -339,6 +388,34 @@ public class ElementGrid
             BurnOut(cell);
 
         scratch.Clear();
+    }
+
+    private void UpdateRecovering(float dt)
+    {
+        for (int i = recoveringCells.Count - 1; i >= 0; i--)
+        {
+            ElementCell cell = recoveringCells[i];
+
+            if (cell.State == CellState.Normal)
+            {
+                ElementMeterSettings meter = cell.Settings.meterSettings;
+
+                float heatBefore = meter.value - cell.Meter.Value;
+                bool recovered = cell.Meter.RecoveryTick(dt, meter);
+                float heatAfter = meter.value - cell.Meter.Value;
+
+                // Pre-paid points cool down with the meter.
+                cell.StoredPoints = heatBefore > 0f
+                    ? cell.StoredPoints * (heatAfter / heatBefore)
+                    : 0f;
+
+                if (!recovered)
+                    continue;
+            }
+
+            cell.IsRecovering = false;
+            recoveringCells.RemoveAt(i);
+        }
     }
 
     // Takes up to `needed` points from burning cells connected to `startCell`, nearest first.
@@ -392,33 +469,7 @@ public class ElementGrid
         }
     }
 
-    private void UpdateRecovering(float dt)
-    {
-        for (int i = recoveringCells.Count - 1; i >= 0; i--)
-        {
-            ElementCell cell = recoveringCells[i];
-
-            if (cell.State == CellState.Normal)
-            {
-                ElementMeterSettings meter = cell.Settings.meterSettings;
-
-                float heatBefore = meter.value - cell.Meter.Value;
-                bool recovered = cell.Meter.RecoveryTick(dt, meter);
-                float heatAfter = meter.value - cell.Meter.Value;
-
-                // Pre-paid points cool down with the meter.
-                cell.StoredPoints = heatBefore > 0f
-                    ? cell.StoredPoints * (heatAfter / heatBefore)
-                    : 0f;
-
-                if (!recovered)
-                    continue;
-            }
-
-            cell.IsRecovering = false;
-            recoveringCells.RemoveAt(i);
-        }
-    }
+    public void MarkCoverage(Bounds area) => coveredAreas.Add(area);
 
     // ---------------- Misc ----------------
 
