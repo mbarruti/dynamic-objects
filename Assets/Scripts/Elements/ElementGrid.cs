@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 using UnityEngine;
 using static Constants;
 
@@ -24,7 +24,6 @@ public class ElementGrid
     private int searchStamp;
     private int tickCount;
 
-    // TO-DO: implement wind effect for fire spread
     private static readonly Vector2Int[] EdgeNeighbors =
     {
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
@@ -161,14 +160,16 @@ public class ElementGrid
     private static bool IsBlocker(Collider col)
     {
         if (col.GetComponentInParent<ElementSurface>() != null)
-            return false;                                               // Ground, any surface.
+            return false;
 
         if (col.GetComponentInParent<CharacterController>() != null)
             return false;                                               // Player/NPCs move around.
 
-        DynamicObjectBehaviour obj = col.GetComponentInParent<DynamicObjectBehaviour>();
-        if (obj != null)
-            return !obj.Data.Traits.flammable;                                 // Rock/metal block; wood burns on its own.
+        if (col.GetComponentInParent<DynamicObjectBehaviour>() != null)
+            return false;
+        // DynamicObjectBehaviour obj = col.GetComponentInParent<DynamicObjectBehaviour>();
+        // if (obj != null)
+        //     return !obj.Data.Traits.flammable;
 
         return true;                                                    // Static scenery (walls, buildings).
     }
@@ -291,26 +292,26 @@ public class ElementGrid
         cell.StoredPoints = 0f;
     }
 
-    private void SetCovered(ElementCell cell, bool covered)
-    {
-        switch (cell.State)
-        {
-            case CellState.Normal when covered:
-                cell.State = CellState.Covered;
-                cell.StoredPoints = 0f;                     // pre-payment lost under the rock
-                break;
+    // private void SetCovered(ElementCell cell, bool covered)
+    // {
+    //     switch (cell.State)
+    //     {
+    //         case CellState.Normal when covered:
+    //             cell.State = CellState.Covered;
+    //             cell.StoredPoints = 0f;                     // pre-payment lost under the rock
+    //             break;
 
-            case CellState.Burning when covered:
-                BurnOut(cell);                              // smothered: leftovers go to burning neighbours
-                break;
+    //         case CellState.Burning when covered:
+    //             BurnOut(cell);                              // smothered: leftovers go to burning neighbours
+    //             break;
 
-            case CellState.Covered when !covered:
-                cell.State = CellState.Normal;
-                cell.Meter = new(cell.Settings.meterSettings);
-                cell.Lifetime = cell.Settings.burnLifetime;
-                break;
-        }
-    }
+    //         case CellState.Covered when !covered:
+    //             cell.State = CellState.Normal;
+    //             cell.Meter = new(cell.Settings.meterSettings);
+    //             cell.Lifetime = cell.Settings.burnLifetime;
+    //             break;
+    //     }
+    // }
 
     // ---------------- Simulation ----------------
 
@@ -323,32 +324,38 @@ public class ElementGrid
 
     private void UpdateCoverage()
     {
-        if (coveredAreas.Count == 0 ) return;
+        // if (coveredAreas.Count == 0 ) return;
 
-        // An object moved by its transform (not by physics) could be read at its old position
-        Physics.SyncTransforms();
+        // // An object moved by its transform (not by physics) could be read at its old position
+        // Physics.SyncTransforms();
 
-        foreach (Bounds b in coveredAreas)
-        {
-            Bounds area = b;
-            area.Expand(gridSettings.cellSize * 0.5f);
+        // foreach (Bounds b in coveredAreas)
+        // {
+        //     Bounds area = b;
+        //     area.Expand(gridSettings.cellSize * 0.5f);
 
-            Vector2Int min = WorldToCell(b.min);
-            Vector2Int max = WorldToCell(b.max);
+        //     Vector2Int min = WorldToCell(b.min);
+        //     Vector2Int max = WorldToCell(b.max);
 
-            for (int x = min.x; x <= max.x; x++)
-            for (int z = min.y; z <= max.y; z++)
-            {
-                if (cells.TryGetValue(new(x, z), out ElementCell cell) && cell.Settings != null)
-                    SetCovered(cell, IsCovered(cell.Position));
-            }
-        }
-        coveredAreas.Clear();
+        //     for (int x = min.x; x <= max.x; x++)
+        //     for (int z = min.y; z <= max.y; z++)
+        //     {
+        //         if (cells.TryGetValue(new(x, z), out ElementCell cell) && cell.Settings != null)
+        //             SetCovered(cell, IsCovered(cell.Position));
+        //     }
+        // }
+        // coveredAreas.Clear();
     }
 
     private void UpdateBurning(float dt)
     {
         tickCount++;
+
+        GlobalWind globalWind = GlobalWind.Instance;
+        Vector3 wind = globalWind != null ? globalWind.Direction : Vector3.one;
+        wind.y = 0f;
+        float windStrength = globalWind != null ? globalWind.windStrength : 0;
+        Vector3 bias = wind.normalized * windStrength + Vector3.up * gridSettings.slopeStrength;
 
         int count = burningCells.Count;
         if (count == 0)
@@ -374,8 +381,18 @@ public class ElementGrid
             {
                 ElementCell neighbor = spreadCells[(start + k) % n];
 
-                if (neighbor != null && Connected(cell, neighbor))
-                    CellEvaluation.ApplyIgnite(this, neighbor, igniteDamage, burn,
+                if (neighbor == cell || !Connected(cell, neighbor))
+                    continue;
+
+                Vector3 dir = (neighbor.Position - cell.Position).normalized;
+                float factor = 1f + Vector3.Dot(bias, dir);
+
+                // Fully upwind, no cell is touched
+                if (factor <= 0f)
+                    continue;
+
+                // if (neighbor != null && Connected(cell, neighbor))
+                    CellEvaluation.ApplyIgnite(this, neighbor, igniteDamage * factor, burn,
                                                 ref cell.StoredPoints, source: cell);
             }
 
@@ -469,7 +486,7 @@ public class ElementGrid
         }
     }
 
-    public void MarkCoverage(Bounds area) => coveredAreas.Add(area);
+    // public void MarkCoverage(Bounds area) => coveredAreas.Add(area);
 
     // ---------------- Misc ----------------
 

@@ -24,7 +24,7 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogWarning($"Two ElementWorlds in the scene ({Instance.name}, {name}). Only the first is used.");
+            Debug.LogWarning($"Two Element Grid Managers in the scene ({Instance.name}, {name}). Only the first is used.");
             return;
         }
 
@@ -97,6 +97,20 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
     {
         if (!drawGizmos || grid == null)
             return;
+
+        GlobalWind globalWind = GlobalWind.Instance;
+        if (globalWind != null)
+        {
+            Vector3 w = globalWind.Direction;
+            w.y = 0f;
+            if (w.sqrMagnitude > 0f)
+            {
+                Vector3 from = transform.position + Vector3.up * 2f;
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(from, from + w.normalized * (1f + globalWind.windStrength) * 2f);
+            }
+        }
+
 
         float size = settings.cellSize * 0.95f;
 

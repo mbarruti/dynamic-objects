@@ -28,19 +28,19 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         Initialize();
     }
 
-    protected virtual void OnEnable()
-    {
-        reportedBounds = ObjectBounds;
-        ElementGridManager mgr = ElementGridManager.Instance;
-        if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
-    }
+    // protected virtual void OnEnable()
+    // {
+    //     reportedBounds = ObjectBounds;
+    //     ElementGridManager mgr = ElementGridManager.Instance;
+    //     if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
+    // }
 
-    protected virtual void OnDisable()
-    {
-        if (reportedBounds == null) return;
-        ElementGridManager mgr = ElementGridManager.Instance;
-        if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
-    }
+    // protected virtual void OnDisable()
+    // {
+    //     if (reportedBounds == null) return;
+    //     ElementGridManager mgr = ElementGridManager.Instance;
+    //     if (mgr != null) mgr.Grid.MarkCoverage(reportedBounds);
+    // }
 
     private void Initialize()
     {
@@ -66,8 +66,6 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
     protected virtual void Update()
     {
         float dt = Time.deltaTime;
-
-        ReportMovement();
         
         // Iterate backwards so finished effects can be removed in place.
         for (int i = currentEffects.Count - 1; i >= 0; i--)
@@ -87,6 +85,8 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
         // TO-DO: generalize for any continuous element effect
         if (!HasEffect<BurnEffect>())
             meter.RecoveryTick(dt, meterSettings);
+
+        // ReportMovement();
     }
 
     // Bounding volume of the object
@@ -184,21 +184,21 @@ public abstract class DynamicObjectBehaviour : MonoBehaviour, IInteractable, IEl
 
     // Physics
 
-    private void ReportMovement()
-    {
-        Bounds currentBounds = ObjectBounds;
-        if ((currentBounds.center - reportedBounds.center).sqrMagnitude < 0.01f &&
-            (currentBounds.size - reportedBounds.size).sqrMagnitude < 0.01f)
-            return;
+    // private void ReportMovement()
+    // {
+    //     Bounds currentBounds = ObjectBounds;
+    //     if ((currentBounds.center - reportedBounds.center).sqrMagnitude < 0.01f &&
+    //         (currentBounds.size - reportedBounds.size).sqrMagnitude < 0.01f)
+    //         return;
         
-        ElementGridManager mgr = ElementGridManager.Instance;
-        if (mgr != null)
-        {
-            mgr.Grid.MarkCoverage(reportedBounds);
-            mgr.Grid.MarkCoverage(currentBounds);
-            reportedBounds = currentBounds;
-        }
-    }
+    //     ElementGridManager mgr = ElementGridManager.Instance;
+    //     if (mgr != null)
+    //     {
+    //         mgr.Grid.MarkCoverage(reportedBounds);
+    //         mgr.Grid.MarkCoverage(currentBounds);
+    //         reportedBounds = currentBounds;
+    //     }
+    // }
 
     // Misc
 

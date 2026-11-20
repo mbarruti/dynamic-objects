@@ -17,6 +17,10 @@ public class GridSettings
     [Min(1)] public int maxSearchCells = 32;
     [Tooltip("Seconds between the pulses burning cells send to objects.")]
     [Min(0.05f)] public float pulseInterval = 0.5f;
+    
+    [Header("Slope")]
+    [Tooltip("How much faster fire climbs uphill (and slower downhill). Works like wind pointing up.")]
+    [Min(0f)] public float slopeStrength = 1f;
 
     [Header("Projection")]
     [Tooltip("How far above the reference height the ray starts.")]

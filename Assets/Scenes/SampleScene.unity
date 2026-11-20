@@ -129,6 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 72141555}
   - component: {fileID: 72141554}
+  - component: {fileID: 72141556}
   m_Layer: 0
   m_Name: Manager
   m_TagString: Untagged
@@ -155,6 +156,7 @@ MonoBehaviour:
     maxStep: 1
     maxSearchCells: 32
     pulseInterval: 0.5
+    slopeStrength: 1
     probeUp: 2
     probeDown: 4
     blockerMask:
@@ -179,6 +181,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &72141556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72141553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51ae6a2b69af2f84d9ea3cdda26e8b09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GlobalWind
+  windDirection: {x: -1, y: 0, z: 0}
+  windStrength: 1
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1060,6 +1076,10 @@ PrefabInstance:
     - target: {fileID: 961438263394201968, guid: 70b1c44577be1b048b3bf47a412e5312, type: 3}
       propertyPath: m_Name
       value: Rock
+      objectReference: {fileID: 0}
+    - target: {fileID: 7009577672911852549, guid: 70b1c44577be1b048b3bf47a412e5312, type: 3}
+      propertyPath: m_Mass
+      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 7926895074336636400, guid: 70b1c44577be1b048b3bf47a412e5312, type: 3}
       propertyPath: m_LocalPosition.x
