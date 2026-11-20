@@ -9,9 +9,14 @@ public struct ElementPulse
     public float Radius;
     public float Amount;
     public float SpreadPoints;
-    public bool StartsFire;
+    public bool StartsFire; // TO-DO: generalize for every element this
     public EffectDefinition EffectDef;
     public object Source;
+
+    // Fire pulses lean with the wind. Tool pulses don't
+    // TO-DO: Tool pulses lean too
+    public float WindFactor(Vector3 target) =>
+        StartsFire ? 1f : Mathf.Max(0f, GlobalWind.Factor(Position, target));
 }
 
 public static class ElementPulses
@@ -86,7 +91,7 @@ public static class ElementPulses
         }
     }
 
-    // Every surface is part of the scene's one grid, so they all map to ElementWorld.
+    // Every surface is part of the scene's one grid, so they all map to ElementGridManager.
     // A pulse touching two surfaces then reaches the grid once, and its points aren't split between them.
     private static IElementReceiver ResolveReceiver(Collider col)
     {

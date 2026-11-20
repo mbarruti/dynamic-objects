@@ -166,6 +166,7 @@ MonoBehaviour:
     seed: 0
   drawGizmos: 1
   drawSpreadPoints: 1
+  firePrefab: {fileID: 0}
 --- !u!4 &72141555
 Transform:
   m_ObjectHideFlags: 0
@@ -175,7 +176,7 @@ Transform:
   m_GameObject: {fileID: 72141553}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.99091, y: 0, z: 6.08731}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -193,8 +194,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51ae6a2b69af2f84d9ea3cdda26e8b09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GlobalWind
-  windDirection: {x: -1, y: 0, z: 0}
-  windStrength: 1
+  direction: 0
+  windStrength: 0
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1244,11 +1245,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ElementSurface
   settings:
     traits:
-      flammable: 0
+      flammable: 1
       conductor: 0
-    burnLifetime: 20
+    burnLifetime: 10
     igniteDamagePerSecond: 3
-    spreadCost: 20
+    spreadCost: 8
     meterSettings:
       value: 30
       recoverDelay: 1
@@ -1482,6 +1483,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: GrassSurface
       objectReference: {fileID: 0}
+    - target: {fileID: 4252615162548913255, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
+      propertyPath: settings.igniteDamagePerSecond
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 5788759538299770985, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -25
@@ -1500,15 +1505,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5788759538299770985, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5788759538299770985, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5788759538299770985, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 5788759538299770985, guid: 176a8e79115b7454c8520c05abc2357d, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1599,9 +1604,9 @@ SceneRoots:
   - {fileID: 854208736823558069}
   - {fileID: 509080296}
   - {fileID: 2467157548579880879}
-  - {fileID: 6048605042024826970}
   - {fileID: 5788759537469165427}
   - {fileID: 2114753979}
   - {fileID: 8786051520997959627}
   - {fileID: 1972834956}
   - {fileID: 72141555}
+  - {fileID: 6048605042024826970}

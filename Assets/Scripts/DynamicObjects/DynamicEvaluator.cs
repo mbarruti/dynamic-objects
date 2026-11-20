@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters;
 using UnityEngine;
 
 public static class DynamicEvaluator
@@ -65,9 +66,8 @@ public static class DynamicEvaluator
         if (pulse.EffectDef == null || !pulse.EffectDef.CanAffect(target.Data.Traits))
             return;
 
-        if (target.DamageMeter(pulse.Amount))
-        {
+        float dmg = pulse.Amount * pulse.WindFactor(target.ObjectOrigin);
+        if (dmg > 0 && target.DamageMeter(dmg))
             target.AddOrRefreshEffect(pulse.EffectDef);
-        }
     }
 }

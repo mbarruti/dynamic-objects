@@ -29,6 +29,9 @@ public class ElementGrid
         Vector2Int.right, Vector2Int.left, Vector2Int.up, Vector2Int.down
     };
 
+    public event Action<ElementCell> Ignited;
+    public event Action<ElementCell> StoppedBurning;
+
     public float SpreadRadius => gridSettings.cellSize * 1.5f;
 
     public IReadOnlyList<ElementCell> BurningCells => burningCells;
@@ -73,7 +76,7 @@ public class ElementGrid
         return cell;
     }
 
-    // Cells whose centre is within `radius` (flat) of `centre`, plus the closest one.
+    // Cells whose centre is within radius, plus the closest one.
     // Skips cells too far above or below for the pulse to reach.
     public void GetCellsInRadius(Vector3 centre, float radius, List<ElementCell> results)
     {
@@ -263,8 +266,10 @@ public class ElementGrid
 
         if (Roll(s.fuelChance))
             cell.StoredPoints += s.fuelPoints;
-
+        
         burningCells.Add(cell);
+        Ignited?.Invoke(cell);
+        
         return true;
     }
 
@@ -272,6 +277,7 @@ public class ElementGrid
     {
         cell.State = CellState.Burnt;
         burningCells.Remove(cell);
+        StoppedBurning?.Invoke(cell);
 
         // Leftover points go to burning neighbours.
         burningNeighbors.Clear();
@@ -384,8 +390,8 @@ public class ElementGrid
                 if (neighbor == cell || !Connected(cell, neighbor))
                     continue;
 
-                Vector3 dir = (neighbor.Position - cell.Position).normalized;
-                float factor = 1f + Vector3.Dot(bias, dir);
+                float factor = GlobalWind.Factor(cell.Position, neighbor.Position) 
+                                /*+ gridSettings.slopeStrength * dir.y*/;
 
                 // Fully upwind, no cell is touched
                 if (factor <= 0f)

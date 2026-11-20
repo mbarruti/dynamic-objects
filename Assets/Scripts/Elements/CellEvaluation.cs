@@ -7,7 +7,8 @@ public static class CellEvaluation
         switch (pulse.Type)
         {
             case ElementType.Fire:
-                ApplyIgnite(grid, cell, pulse.Amount, pulse.EffectDef, ref points, pulse.StartsFire);
+                float dmg = pulse.Amount * pulse.WindFactor(cell.Position);
+                if (dmg > 0f) ApplyIgnite(grid, cell, dmg, pulse.EffectDef, ref points, pulse.StartsFire);
                 break;
         }
     }

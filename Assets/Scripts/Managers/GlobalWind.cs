@@ -51,4 +51,38 @@ public class GlobalWind : MonoBehaviour
         if (Instance == this)
             Instance = null;
     }
+
+    public static float Factor(Vector3 from, Vector3 to)
+    {
+        GlobalWind globalWind = Instance;
+        if (globalWind == null || globalWind.windStrength <= 0f)
+            return 1f;
+        
+        Vector3 dir = to - from;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.0001f)
+            return 1f;
+
+        return 1f + globalWind.windStrength * Vector3.Dot(globalWind.Direction, dir.normalized);
+    }
+
+    // Dev
+    private void OnDrawGizmos()
+    {
+        if (windStrength <= 0f)
+            return;
+
+        Vector3 dir = Direction;
+        Vector3 from = transform.position;
+        Vector3 to = from + dir * (1f + windStrength) * 2f;
+
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawLine(from, to);
+
+        // Arrowhead
+        Vector3 side = Vector3.Cross(Vector3.up, dir) * 0.4f;
+        Vector3 back = -dir * 0.6f;
+        Gizmos.DrawLine(to, to + back + side);
+        Gizmos.DrawLine(to, to + back - side);
+    }
 }

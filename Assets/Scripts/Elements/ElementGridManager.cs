@@ -11,9 +11,14 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
     [SerializeField] private bool drawSpreadPoints = false;
     public bool DrawSpreadPoints => drawSpreadPoints;
 
+    [Header("Visuals")]
+    [Tooltip("Spawned on burning cells. Empty = built-in placeholder.")]
+    [SerializeField] private ParticleSystem firePrefab;
+
     private ElementGrid grid;
     private float tickTimer;
     private float pulseTimer;
+    private FireVisuals visuals;
 
     // Static, so with domain reload off it must be cleared in OnDisable.
     public static ElementGridManager Instance { get; private set; }
@@ -29,14 +34,27 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
         }
 
         Instance = this;
-        grid ??= new ElementGrid(settings,
-                                 settings.useSeed ? new System.Random(settings.seed) : new System.Random());
+
+        if (grid == null)
+        {
+            grid = new ElementGrid(settings,
+                                    settings.useSeed ? new System.Random(settings.seed) : new System.Random());
+                                    
+            visuals = new FireVisuals(firePrefab, name, settings.cellSize);
+            grid.Ignited += visuals.Show;
+            grid.StoppedBurning += visuals.Hide;
+        }
     }
 
     private void OnDisable()
     {
         if (Instance == this)
             Instance = null;
+    }
+
+    private void OnDestroy()
+    {
+        visuals?.Dispose();
     }
 
     private void Update()
@@ -59,6 +77,8 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
         }
     }
 
+    // Receiving
+
     public float ReceivePulse(ElementPulse pulse) => grid.ApplyPulse(pulse);
 
     public bool AcceptsEffect(EffectDefinition def, Collider hit)
@@ -67,6 +87,7 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
         return surface != null && def.CanAffect(surface.Settings.traits);
     }
 
+    // Sending
 
     // Burning cells only need to reach objects: every surface is already this grid.
     // Objects don't take points from fire, so these pulses carry none.
@@ -97,20 +118,6 @@ public class ElementGridManager : MonoBehaviour, IElementReceiver
     {
         if (!drawGizmos || grid == null)
             return;
-
-        GlobalWind globalWind = GlobalWind.Instance;
-        if (globalWind != null)
-        {
-            Vector3 w = globalWind.Direction;
-            w.y = 0f;
-            if (w.sqrMagnitude > 0f)
-            {
-                Vector3 from = transform.position + Vector3.up * 2f;
-                Gizmos.color = Color.cyan;
-                Gizmos.DrawLine(from, from + w.normalized * (1f + globalWind.windStrength) * 2f);
-            }
-        }
-
 
         float size = settings.cellSize * 0.95f;
 
